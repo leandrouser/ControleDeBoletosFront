@@ -1,0 +1,55 @@
+<div class="relatorios-container">
+  <h2>Relatórios</h2>
+
+  <div class="loading" *ngIf="loading">
+    Carregando relatório...
+  </div>
+
+  <div *ngIf="!loading && relatorio" class="relatorio-content">
+    <div class="resumo">
+      <h3>Resumo</h3>
+      <p>Total de Billets: {{ relatorio.totalBillets }}</p>
+      <p>Valor Total: R$ {{ relatorio.valorTotal | number:'1.2-2' }}</p>
+    </div>
+
+    <div class="boletos-por-categoria">
+      <h3>Boletos por Categoria</h3>
+      <table class="relatorio-table">
+        <thead>
+          <tr>
+            <th>Categoria</th>
+            <th>Quantidade</th>
+            <th>Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of relatorio.billetsPorCategoria">
+            <td>{{ item.categoria }}</td>
+            <td>{{ item.quantidade }}</td>
+            <td>R$ {{ item.valor | number:'1.2-2' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="boletos-por-status">
+      <h3>Boletos por Status</h3>
+      <table class="relatorio-table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Quantidade</th>
+            <th>Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of relatorio.billetsPorStatus">
+            <td>{{ item.status }}</td>
+            <td>{{ item.quantidade }}</td>
+            <td>R$ {{ item.valor | number:'1.2-2' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

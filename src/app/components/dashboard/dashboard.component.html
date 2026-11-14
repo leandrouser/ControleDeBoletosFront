@@ -1,0 +1,70 @@
+<div class="app" [class.collapsed]="collapsed()">
+  @if (menuOpen()) {
+    <div class="backdrop" (click)="closeMenu()"></div>
+  }
+
+  <aside class="sidebar" [class.open]="menuOpen()"
+       (mouseenter)="expand()" (mouseleave)="scheduleCollapse()"
+       (focusin)="expand()" (focusout)="scheduleCollapse()"
+       aria-label="Navegação principal">
+          <div class="sidebar-head">
+        <a class="brand" routerLink="/dashboard" (click)="closeMenu()">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round"><path [attr.d]="icons.logo" /></svg>
+          </span>
+          <span class="label">boleto<span class="accent">.fácil</span></span>
+        </a>
+
+        <button type="button" class="icon-btn collapse-btn" (click)="toggleCollapse()"
+                [attr.aria-label]="collapsed() ? 'Expandir menu' : 'Recolher menu'"
+                [attr.aria-expanded]="!collapsed()"
+                [title]="collapsed() ? 'Expandir menu' : 'Recolher menu'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path [attr.d]="collapsed() ? icons.chevronRight : icons.chevronLeft" />
+          </svg>
+        </button>
+      </div>
+
+    <nav class="nav">
+      <span class="nav-title">Menu</span>
+      @for (item of nav; track item.link) {
+        <a class="nav-link" [routerLink]="item.link" routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: !!item.exact }" (click)="closeMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path [attr.d]="item.icon" />
+          </svg>
+          <span class="label">{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user">
+        <span class="avatar" aria-hidden="true">{{ initial() }}</span>
+        <span class="user-text label">
+          <strong>{{ user()?.name || 'Usuário' }}</strong>
+          <small>{{ user()?.email || user()?.phone || '' }}</small>
+        </span>
+      </div>
+      <button type="button" class="icon-btn" (click)="logout()" aria-label="Sair" title="Sair">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round"><path [attr.d]="icons.logout" /></svg>
+      </button>
+    </div>
+  </aside>
+
+  <div class="content">
+    <header class="topbar">
+      <button type="button" class="icon-btn menu-btn" (click)="menuOpen.set(true)" aria-label="Abrir menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round"><path [attr.d]="icons.menu" /></svg>
+      </button>
+      <span class="topbar-brand">boleto<span class="accent">.fácil</span></span>
+    </header>
+
+    <main class="main"><router-outlet /></main>
+  </div>
+</div>

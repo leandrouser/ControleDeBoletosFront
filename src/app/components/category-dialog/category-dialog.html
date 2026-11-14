@@ -1,0 +1,40 @@
+
+<dialog #dialog class="dialog dialog-sm" aria-labelledby="category-title">
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <header class="dialog-header">
+      <h2 id="category-title">{{ editing() ? 'Editar categoria' : 'Nova categoria' }}</h2>
+      <button type="button" class="icon-btn dialog-close" (click)="close()" aria-label="Fechar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+      </button>
+    </header>
+
+    <div class="fields">
+      @if (formError()) {
+        <div class="alert" role="alert"><span>{{ formError() }}</span></div>
+      }
+
+      <div class="field">
+        <label for="catName">Nome</label>
+        <input id="catName" type="text" formControlName="name" placeholder="Nome da categoria"
+               [class.invalid]="form.controls.name.invalid && form.controls.name.touched" />
+        @if (form.controls.name.invalid && form.controls.name.touched) {
+          <small class="err">Informe o nome.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="catType">Tipo de despesa</label>
+        <select id="catType" formControlName="expenseType">
+          @for (t of expenseTypes; track t.value) { <option [value]="t.value">{{ t.label }}</option> }
+        </select>
+      </div>
+    </div>
+
+    <footer class="dialog-footer">
+      <button type="button" class="btn btn-outline" (click)="close()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        {{ saving() ? 'Salvando...' : 'Salvar' }}
+      </button>
+    </footer>
+  </form>
+</dialog>

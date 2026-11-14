@@ -1,0 +1,350 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Boletos</h1>
+      <p>Cadastre, acompanhe e dê baixa nos seus boletos.</p>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="openForm()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+      Novo boleto
+    </button>
+  </header>
+
+  @if (error()) {
+    <div class="alert" role="alert">
+      <span>{{ error() }}</span>
+      <button type="button" class="link" (click)="load()">Tentar novamente</button>
+    </div>
+  }
+
+  <article class="card week-card">
+    <header class="week-header">
+      <div>
+        <h2>Vencem esta semana</h2>
+        <p>Boletos em aberto de segunda a domingo.</p>
+      </div>
+      @if (weekPage(); as p) {
+        @if (p.totalElements) {
+          <span class="week-summary">
+            {{ p.totalElements }} boleto(s)
+            <span class="sep">·</span>
+            total da página: <strong>{{ weekPageTotal() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+          </span>
+        }
+      }
+    </header>
+
+    @if (weekLoading() && !weekPage()) {
+      <div class="skeleton-list" aria-busy="true">
+        @for (i of [1, 2, 3]; track i) { <div class="skeleton"></div> }
+      </div>
+    } @else if (weekError()) {
+      <div class="alert week-alert" role="alert">
+        <span>{{ weekError() }}</span>
+        <button type="button" class="link" (click)="loadWeek(weekPage()?.number ?? 0)">Tentar novamente</button>
+      </div>
+    } @else if (!weekItems().length) {
+      <div class="empty">
+        <strong>Nenhum boleto vence nesta semana</strong>
+        <span>Tudo em dia por aqui.</span>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Vencimento</th>
+              <th>Beneficiário</th>
+              <th>Categoria</th>
+              <th class="num">Valor</th>
+              <th>Prazo</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of weekItems(); track b.id) {
+              <tr [class]="'week-row ' + urgencyClass(b)">
+                <td class="strong">{{ b.dueDate | date:'dd/MM/yyyy' }}</td>
+                <td>{{ b.beneficiary }}</td>
+                <td>{{ b.categoryName }}</td>
+                <td class="num">{{ b.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+                <td><span class="badge" [class]="'badge ' + (b.daysUntilDue <= 1 ? 'badge-vencido' : 'badge-pendente')">{{ urgencyLabel(b) }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (weekPage(); as p) {
+        @if (p.totalPages > 1) {
+          <footer class="table-footer">
+            <span>Página {{ p.number + 1 }} de {{ p.totalPages }}</span>
+            <div class="pager">
+              <button type="button" class="btn btn-outline" [disabled]="p.first || weekLoading()" (click)="weekPrevious()">Anterior</button>
+              <button type="button" class="btn btn-outline" [disabled]="p.last || weekLoading()" (click)="weekNext()">Próxima</button>
+            </div>
+          </footer>
+        }
+      }
+    }
+  </article>
+
+  <article class="card">
+    <div class="toolbar">
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+        <input type="search" placeholder="Buscar por número, beneficiário ou categoria"
+               [value]="search()" (input)="onSearch($any($event.target).value)" aria-label="Buscar boletos" />
+      </label>
+
+      <select class="select" aria-label="Filtrar por categoria"
+              (change)="onCategory($any($event.target).value)">
+        <option value="">Todas as categorias</option>
+        @for (c of categories(); track c.id) {
+          <option [value]="c.id">{{ c.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Filtrar por status">
+      @for (t of tabs; track t.key) {
+        <button type="button" role="tab" class="tab"
+                [class.active]="statusFilter() === t.key"
+                [attr.aria-selected]="statusFilter() === t.key"
+                (click)="onStatus(t.key)">
+          {{ t.label }}
+          <span class="count">{{ counts()[t.key] }}</span>
+        </button>
+      }
+    </div>
+
+    @if (loading()) {
+      <div class="skeleton-list" aria-busy="true">
+        @for (i of [1, 2, 3, 4, 5]; track i) { <div class="skeleton"></div> }
+      </div>
+    } @else if (!filtered().length) {
+      <div class="empty">
+        <strong>Nenhum boleto encontrado</strong>
+          <span>
+            {{ (mainPage()?.totalElements ?? 0) > 0
+              ? 'Ajuste os filtros para ver mais resultados.'
+              : 'Cadastre seu primeiro boleto para começar.' }}
+          </span>
+        </div>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Beneficiário</th>
+              <th>Categoria</th>
+              <th>Vencimento</th>
+              <th class="num">Valor</th>
+              <th>Status</th>
+              <th class="actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of paged(); track r.billets.id) {
+              <tr>
+                <td class="strong">{{ r.beneficiary }}</td>
+                <td>{{ r.category }}</td>
+                <td>{{ r.due ? (r.due | date:'dd/MM/yyyy') : '—' }}</td>
+                <td class="num">{{ r.billets.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+                <td><span [class]="'badge badge-' + r.status">{{ statusLabel[r.status] }}</span></td>
+                <td class="actions">
+                  @if (r.status !== 'pago') {
+                    <button type="button" class="icon-btn success" (click)="markPaid(r)" aria-label="Marcar boleto como pago" title="Marcar como pago">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="m8 12.5 3 3 5-6" /></svg>
+                    </button>
+                  }
+                  <button type="button" class="icon-btn" (click)="openForm(r)" aria-label="Editar boleto" title="Editar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+                  </button>
+                  <button type="button" class="icon-btn danger" (click)="askDelete(r)" aria-label="Excluir boleto" title="Excluir">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6" /></svg>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="table-footer">
+        <span>
+          {{ rangeLabel() }}
+          <span class="sep">·</span>
+          Em aberto na lista: <strong>{{ openTotal() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+        </span>
+        <div class="pager">
+          <button type="button" class="btn btn-outline" [disabled]="page() === 1" (click)="goTo(page() - 1)">Anterior</button>
+          <span>{{ page() }} / {{ totalPages() }}</span>
+          <button type="button" class="btn btn-outline" [disabled]="page() === totalPages()" (click)="goTo(page() + 1)">Próxima</button>
+        </div>
+      </footer>
+    }
+  </article>
+</section>
+
+<dialog #formDialog class="dialog" aria-labelledby="form-title">
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <header class="dialog-header">
+      <h2 id="form-title">{{ editing() ? 'Editar boleto' : 'Novo boleto' }}</h2>
+      <p>Comece pelo código de barras: o sistema preenche o restante.</p>
+      <button type="button" class="icon-btn dialog-close" (click)="closeForm()" aria-label="Fechar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+      </button>
+    </header>
+
+    <div class="fields">
+      @if (formError()) {
+        <div class="alert" role="alert"><span>{{ formError() }}</span></div>
+      }
+
+      <div class="field scan">
+        <label for="codigoBarras">Código de barras ou linha digitável <span class="optional">(opcional)</span></label>
+        <div class="barcode-row">
+          <input id="codigoBarras" type="text" inputmode="numeric" autocomplete="off"
+                 formControlName="barcode"
+                 placeholder="Digite, cole ou escaneie o código"
+                 [class.invalid]="form.controls.barcode.invalid && form.controls.barcode.touched"
+                 (input)="onBarcodeInput($any($event.target).value)"
+                 (keydown.enter)="$event.preventDefault(); form.controls.barcode.markAsTouched()" />
+          <button type="button" class="btn btn-outline" (click)="openScanner()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M11 8v8M15 8v8M18 8v8" /></svg>
+            Escanear
+          </button>
+        </div>
+
+        @if (form.controls.barcode.invalid && form.controls.barcode.touched) {
+          <small class="err">{{ form.controls.barcode.errors?.['barcode'] }}</small>
+        }
+
+        @if (parsed(); as p) {
+          <div class="barcode-info">
+            <span class="badge badge-pago">✓ Código válido</span>
+            <span>{{ p.tipo === 'bancario' ? 'Boleto bancário' : 'Conta de consumo / tributo' }}</span>
+            @if (p.banco) { <span>· {{ p.banco }}</span> }
+            @if (p.segmento) { <span>· {{ p.segmento }}</span> }
+            @if (!p.vencimento) { <span class="warn">· Este código não traz o vencimento. Informe abaixo.</span> }
+            @if (p.valor === null) { <span class="warn">· Este código não traz o valor. Informe abaixo.</span> }
+            <button type="button" class="btn-ghost" (click)="copyCode()">
+              {{ copied() ? 'Copiado ✓' : 'Copiar só números' }}
+            </button>
+          </div>
+        }
+
+        @if (duplicate(); as d) {
+          <small class="err">Já existe um boleto com este código ({{ d.beneficiary }}).</small>
+        }
+      </div>
+
+      <div class="field two">
+        <div>
+          <label for="dueDate">Vencimento</label>
+          <input id="dueDate" type="date" formControlName="dueDate" [class.invalid]="fieldInvalid('dueDate')" />
+          @if (fieldInvalid('dueDate')) { <small class="err">Informe a data.</small> }
+        </div>
+        <div>
+          <label for="amount">Valor</label>
+            <div class="input-group">
+              <span class="prefix">R$</span>
+              <input id="amount" type="number" step="0.01" min="0" inputmode="decimal" formControlName="amount" placeholder="0,00" [class.invalid]="fieldInvalid('amount')" />
+            </div>
+          @if (fieldInvalid('amount')) { <small class="err">Informe um valor maior que zero.</small> }
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="beneficiario">Beneficiário</label>
+
+        @if (beneficiaryAuto() && !editingName()) {
+          <div class="benef">
+            <span class="badge badge-pago">✓ Identificado</span>
+            <strong>{{ beneficiaryAuto() }}</strong>
+            <button type="button" class="btn-ghost" (click)="startEditName()">Corrigir</button>
+          </div>
+        } @else {
+          <input id="beneficiario" type="text" formControlName="beneficiary"
+                 placeholder="Nome do beneficiário" [class.invalid]="invalidName()" />
+          @if (invalidName()) { <small class="err">Informe o beneficiário.</small> }
+          @if (lookingUp()) {
+            <small class="hint">Procurando o beneficiário deste código...</small>
+          } @else if (parsed() && !editingName()) {
+            <small class="hint">
+              Beneficiário não identificado por este código. Informe o nome uma vez e os próximos desse emissor serão reconhecidos.
+            </small>
+          }
+        }
+      </div>
+
+      <div class="field">
+        <div class="label-row">
+          <label for="categoryId">Categoria</label>
+          <button type="button" class="btn-ghost" (click)="openCategoryDialog()">+ Nova categoria</button>
+        </div>
+        <select id="categoryId" formControlName="categoryId"
+                [disabled]="categoriesLoading() || !!categoriesError() || !categories().length"
+                [class.invalid]="fieldInvalid('categoryId') && !!categories().length">
+          <option [ngValue]="null" disabled>Selecione</option>
+          @for (c of categories(); track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }
+        </select>
+        @if (categoriesLoading()) {
+          <small class="hint">Carregando categorias...</small>
+        } @else if (categoriesError()) {
+          <small class="err" role="alert">
+            {{ categoriesError() }}
+            <button type="button" class="retry-link" (click)="loadCategories()">Tentar novamente</button>
+          </small>
+        } @else if (!categories().length) {
+          <small class="hint">Nenhuma categoria cadastrada. Use "+ Nova categoria" para criar a primeira.</small>
+        } @else if (fieldInvalid('categoryId')) {
+          <small class="err">Selecione uma categoria.</small>
+        }
+      </div>
+
+      <div class="field two">
+        <div>
+          <label for="status">Situação</label>
+          <select id="status" formControlName="status">
+            <option value="pendente">Em aberto</option>
+            <option value="pago">Pago</option>
+          </select>
+        </div>
+        @if (form.controls.status.value === 'pago') {
+          <div>
+            <label for="dataPagamento">Data do pagamento</label>
+            <input id="dataPagamento" type="date" formControlName="paymentDate" />
+          </div>
+        }
+      </div>
+    </div>
+
+    <footer class="dialog-footer">
+      <button type="button" class="btn btn-outline" (click)="closeForm()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving() || !!duplicate()">
+        {{ saving() ? 'Salvando...' : 'Salvar' }}
+      </button>
+    </footer>
+  </form>
+</dialog>
+
+<dialog #deleteDialog class="dialog dialog-sm" aria-labelledby="delete-title">
+  <header class="dialog-header">
+    <h2 id="delete-title">Excluir boleto?</h2>
+    <p>
+      O boleto de <strong>{{ toDelete()?.beneficiary }}</strong> no valor de
+      <strong>{{ toDelete()?.billets?.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+      será removido. Esta ação não pode ser desfeita.
+    </p>
+  </header>
+  <footer class="dialog-footer">
+    <button type="button" class="btn btn-outline" (click)="cancelDelete()">Cancelar</button>
+    <button type="button" class="btn btn-danger" [disabled]="saving()" (click)="confirmDelete()">
+      {{ saving() ? 'Excluindo...' : 'Excluir' }}
+    </button>
+  </footer>
+</dialog>
+
+<app-barcode-scanner (scanned)="onScanned($event)" />
+<app-category-dialog (saved)="onCategorySaved($event)" />

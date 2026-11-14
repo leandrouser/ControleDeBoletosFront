@@ -1,0 +1,148 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Dashboard</h1>
+      <p>Acompanhe vencimentos e valores em aberto dos seus boletos.</p>
+    </div>
+    <a class="btn btn-primary" routerLink="/dashboard/billets">Ver Boletos</a>
+  </header>
+
+  @if (error()) {
+    <div class="alert" role="alert">
+      <span>{{ error() }}</span>
+      <button type="button" class="link" (click)="load()">Tentar novamente</button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="stats" aria-busy="true">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="card skeleton" style="height: 118px"></div>
+      }
+    </div>
+  } @else if (overview(); as data) {
+    <div class="stats">
+      <article class="card stat stat-open">
+        <span class="stat-label">Valor em aberto</span>
+        <strong class="stat-value">{{ data.cards.valorEmAberto | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+        <span class="stat-hint">{{ data.cards.quantidadeEmAberto }} boletos em aberto</span>
+      </article>
+
+      <article class="card stat stat-danger">
+        <span class="stat-label">Vencidos</span>
+        <strong class="stat-value">{{ data.cards.valorVencido | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+        <span class="stat-hint">{{ data.cards.quantidadeVencidos }} boletos atrasados</span>
+      </article>
+
+      <article class="card stat stat-warning">
+        <span class="stat-label">Vencem em 7 dias</span>
+        <strong class="stat-value">{{ data.cards.valorVencendoEmSeteDias | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+        <span class="stat-hint">{{ data.cards.quantidadeVencendoEmSeteDias }} boletos próximos</span>
+      </article>
+
+      <article class="card stat stat-success">
+        <span class="stat-label">Pagos no mês</span>
+        <strong class="stat-value">{{ data.cards.valorPagoNoMes | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+        <span class="stat-hint">{{ data.cards.quantidadePagosNoMes }} boletos quitados</span>
+      </article>
+    </div>
+
+    <div class="grid">
+      <article class="card">
+        <header class="card-header chart-header">
+          <div>
+              <h2>Vencimentos por {{ chartPeriod() === 'mes' ? 'mês' : chartPeriod() }}</h2>
+              <p>Valores e períodos informados pela API</p>
+          </div>
+          <div class="period-switch" role="group" aria-label="Período do gráfico de vencimentos">
+            @for (period of chartPeriods; track period.key) {
+              <button type="button" [class.active]="chartPeriod() === period.key"
+                      [attr.aria-pressed]="chartPeriod() === period.key"
+                      (click)="setChartPeriod(period.key)">
+                {{ period.label }}
+              </button>
+            }
+          </div>
+        </header>
+        <div class="chart-scroll">
+          <div class="chart" [style.--bucket-count]="data.vencimentos.length"
+               [attr.aria-label]="'Vencimentos por ' + chartPeriod()">
+            @for (bucket of data.vencimentos; track bucket.chave) {
+              <div class="bar-col">
+                <span class="bar-value">{{ bucket.valor | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</span>
+                <div class="bar-track">
+                  <div class="bar" [class.bar-empty]="bucket.valor === 0"
+                       [style.height.%]="bucket.percentual"></div>
+                </div>
+                <span class="bar-label">{{ bucket.rotulo }}<small>{{ bucket.rotuloPeriodo }}</small></span>
+              </div>
+            }
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <header class="card-header">
+          <h2>Por categoria</h2>
+          <p>Maiores valores em aberto</p>
+        </header>
+        @if (data.categorias.length) {
+          <ul class="cat-list">
+            @for (c of data.categorias; track c.nome) {
+              <li>
+                <div class="cat-row">
+                  <span>{{ c.nome }}</span>
+                  <strong>{{ c.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+                </div>
+                <div class="progress"><div [style.width.%]="c.percentual"></div></div>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="empty">Nenhum valor em aberto.</p>
+        }
+      </article>
+    </div>
+
+    <article class="card table-card">
+      <header class="card-header row">
+        <div>
+          <h2>Próximos vencimentos</h2>
+          <p>Os boletos em aberto mais próximos de vencer</p>
+        </div>
+        <a class="btn btn-outline" routerLink="/dashboard/billets">Ver todos</a>
+      </header>
+
+      @if (data.proximosVencimentos.length) {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Beneficiário</th>
+                <th>Categoria</th>
+                <th>Vencimento</th>
+                <th class="num">Valor</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of data.proximosVencimentos; track r.id) {
+                <tr>
+                  <td>
+                    <div class="cell-title">{{ r.beneficiario || 'N/A' }}</div>
+                  </td>
+                  <td>{{ r.categoriaNome }}</td>
+                  <td>{{ r.dataVencimento | date:'dd/MM/yyyy' }}</td>
+                  <td class="num">{{ r.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+                  <td><span class="badge" [class]="'badge badge-' + r.situacao">{{ statusLabel[r.situacao] }}</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="empty">Nenhum boleto em aberto. Tudo em dia!</p>
+      }
+    </article>
+  }
+</section>

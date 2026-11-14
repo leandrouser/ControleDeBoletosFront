@@ -1,0 +1,54 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Beneficiários</h1>
+      <p>Consulte os nomes de beneficiários identificados nos seus boletos.</p>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="alert" role="alert">
+      <span>{{ error() }}</span>
+      <button type="button" class="link" (click)="load()">Tentar novamente</button>
+    </div>
+  }
+
+  <article class="card">
+    <div class="toolbar">
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+        <input type="search" placeholder="Buscar beneficiário pelo nome"
+               [value]="search()" (input)="onSearch($any($event.target).value)" aria-label="Buscar beneficiários" />
+      </label>
+      <span class="result-count">{{ beneficiarios().length }} {{ beneficiarios().length === 1 ? 'resultado' : 'resultados' }}</span>
+    </div>
+    <p class="hint">A busca mostra até 10 nomes. Digite para localizar outros beneficiários.</p>
+
+    @if (loading()) {
+      <div class="skeleton-list" aria-busy="true" aria-label="Carregando beneficiários">
+        @for (i of [1, 2, 3, 4]; track i) { <div class="skeleton"></div> }
+      </div>
+    } @else if (beneficiarios().length) {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Nome do beneficiário</th></tr>
+          </thead>
+          <tbody>
+            @for (beneficiario of beneficiarios(); track beneficiario) {
+              <tr><td class="strong">{{ beneficiario }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="empty">
+        <strong>{{ search() ? 'Nenhum beneficiário encontrado' : 'Nenhum beneficiário identificado' }}</strong>
+        <span>{{ search() ? 'Confira o nome e tente novamente.' : 'Os nomes aparecerão aqui quando forem identificados nos boletos.' }}</span>
+      </div>
+    }
+  </article>
+</section>
