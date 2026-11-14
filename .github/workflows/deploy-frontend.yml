@@ -34,16 +34,27 @@ jobs:
           echo "dir=$(dirname "$INDEX")" >> "$GITHUB_OUTPUT"
 
       - name: Configurar SSH
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          SSH_HOST: ${{ secrets.VPS_HOST }}
+          SSH_USER: ${{ secrets.VPS_USER }}
         run: |
+          : "${SSH_KEY:?secret VPS_SSH_KEY está vazio}"
+          : "${SSH_HOST:?secret VPS_HOST está vazio}"
+          : "${SSH_USER:?secret VPS_USER está vazio}"
           install -m 700 -d ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: Enviar e publicar
+        env:
+          SSH_HOST: ${{ secrets.VPS_HOST }}
+          SSH_USER: ${{ secrets.VPS_USER }}
+          BUILD_DIR: ${{ steps.out.outputs.dir }}
         run: |
-          HOST="${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}"
-          tar -czf - -C "${{ steps.out.outputs.dir }}" . | ssh "$HOST" '
+          HOST="$SSH_USER@$SSH_HOST"
+          tar -czf - -C "$BUILD_DIR" . | ssh "$HOST" '
             set -e
             rm -rf /var/www/boletos-novo/.incoming
             mkdir -p /var/www/boletos-novo/.incoming
