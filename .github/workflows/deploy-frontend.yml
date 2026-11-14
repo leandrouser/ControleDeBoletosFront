@@ -1,0 +1,59 @@
+name: Deploy frontend (boletos-novo)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-boletos-novo-front
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Localizar build
+        id: out
+        run: |
+          INDEX=$(find dist -type f -name index.html | head -n 1)
+          test -n "$INDEX"
+          echo "dir=$(dirname "$INDEX")" >> "$GITHUB_OUTPUT"
+
+      - name: Configurar SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Enviar e publicar
+        run: |
+          HOST="${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}"
+          tar -czf - -C "${{ steps.out.outputs.dir }}" . | ssh "$HOST" '
+            set -e
+            rm -rf /var/www/boletos-novo/.incoming
+            mkdir -p /var/www/boletos-novo/.incoming
+            tar -xzf - -C /var/www/boletos-novo/.incoming
+          '
+          ssh "$HOST" '
+            set -e
+            cd /var/www/boletos-novo
+            test -f .incoming/index.html
+            find . -mindepth 1 -maxdepth 1 ! -name .incoming -exec rm -rf {} +
+            cp -a .incoming/. .
+            rm -rf .incoming
+          '
