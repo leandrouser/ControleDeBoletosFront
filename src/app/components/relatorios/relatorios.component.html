@@ -133,7 +133,16 @@
               <tbody>
                 @for (item of data.billetsPorStatus; track item.status) {
                   <tr>
-                    <td>{{ item.status }}</td>
+                    <td>
+                      <span
+                        class="badge"
+                        [class.badge-pago]="item.status === 'Pago'"
+                        [class.badge-vencido]="item.status === 'Vencido'"
+                        [class.badge-a-vencer]="item.status === 'Pendente'"
+                      >
+                        {{ item.status }}
+                      </span>
+                    </td>
                     <td class="num">{{ item.quantidade }}</td>
                     <td class="num">{{ item.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
                   </tr>

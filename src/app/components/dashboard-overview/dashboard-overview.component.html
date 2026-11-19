@@ -34,7 +34,7 @@
         <span class="stat-hint">{{ data.cards.quantidadeVencidos }} boletos atrasados</span>
       </article>
 
-      <article class="card stat stat-warning">
+      <article class="card stat stat-success">
         <span class="stat-label">Vencem em 7 dias</span>
         <strong class="stat-value">{{ data.cards.valorVencendoEmSeteDias | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
         <span class="stat-hint">{{ data.cards.quantidadeVencendoEmSeteDias }} boletos próximos</span>
@@ -134,7 +134,7 @@
                   <td>{{ r.categoriaNome }}</td>
                   <td>{{ r.dataVencimento | date:'dd/MM/yyyy' }}</td>
                   <td class="num">{{ r.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
-                  <td><span class="badge" [class]="'badge badge-' + r.situacao">{{ statusLabel[r.situacao] }}</span></td>
+                  <td><span class="badge" [class]="'badge badge-' + upcomingStatus(r)">{{ statusLabel[upcomingStatus(r)] }}</span></td>
                 </tr>
               }
             </tbody>

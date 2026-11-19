@@ -200,6 +200,18 @@
   .num { text-align: right; font-variant-numeric: tabular-nums; }
 }
 
+.badge {
+  display: inline-flex;
+  border-radius: 99px;
+  padding: 3px 9px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-pago,
+.badge-a-vencer { background: var(--success-soft); color: var(--success); }
+.badge-vencido { background: var(--danger-soft); color: var(--danger); }
+
 .loading,
 .empty {
   padding: 28px 20px;

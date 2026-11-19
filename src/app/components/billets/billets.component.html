@@ -67,7 +67,7 @@
                 <td>{{ b.beneficiary }}</td>
                 <td>{{ b.categoryName }}</td>
                 <td class="num">{{ b.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
-                <td><span class="badge" [class]="'badge ' + (b.daysUntilDue <= 1 ? 'badge-vencido' : 'badge-pendente')">{{ urgencyLabel(b) }}</span></td>
+                <td><span class="badge" [class]="'badge ' + urgencyBadgeClass(b)">{{ urgencyLabel(b) }}</span></td>
               </tr>
             }
           </tbody>
@@ -150,7 +150,7 @@
                 <td>{{ r.category }}</td>
                 <td>{{ r.due ? (r.due | date:'dd/MM/yyyy') : '—' }}</td>
                 <td class="num">{{ r.billets.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
-                <td><span [class]="'badge badge-' + r.status">{{ statusLabel[r.status] }}</span></td>
+                <td><span [class]="'badge ' + r.statusClass">{{ r.statusLabel }}</span></td>
                 <td class="actions">
                   @if (r.status !== 'pago') {
                     <button type="button" class="icon-btn success" (click)="markPaid(r)" aria-label="Marcar boleto como pago" title="Marcar como pago">

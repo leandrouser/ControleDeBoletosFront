@@ -7,11 +7,24 @@ import {
   DashboardPeriod
 } from '../../services/dashboard-overview.service';
 
-const STATUS_LABEL: Record<DashboardOverviewResponse['proximosVencimentos'][number]['situacao'], string> = {
+type DashboardStatus =
+  | DashboardOverviewResponse['proximosVencimentos'][number]['situacao']
+  | 'vence-hoje'
+  | 'vence-amanha';
+
+const STATUS_LABEL: Record<DashboardStatus, string> = {
   pago: 'Pago',
   vencido: 'Vencido',
+  'vence-hoje': 'Vence hoje',
+  'vence-amanha': 'Vence amanhã',
   'a-vencer': 'A vencer'
 };
+
+function dateKey(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
 
 @Component({
   selector: 'app-dashboard-overview',
@@ -43,6 +56,20 @@ export class DashboardOverviewComponent implements OnInit {
     if (this.chartPeriod() === period) return;
     this.chartPeriod.set(period);
     this.load();
+  }
+
+  upcomingStatus(
+    billet: DashboardOverviewResponse['proximosVencimentos'][number]
+  ): DashboardStatus {
+    if (billet.situacao !== 'a-vencer') return billet.situacao;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = billet.dataVencimento.slice(0, 10);
+    if (dueDate === dateKey(today)) return 'vence-hoje';
+
+    today.setDate(today.getDate() + 1);
+    return dueDate === dateKey(today) ? 'vence-amanha' : 'a-vencer';
   }
 
   load(): void {

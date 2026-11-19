@@ -17,13 +17,9 @@ interface Row {
   category: string;
   due: Date | null;
   status: StatusKey;
+  statusLabel: string;
+  statusClass: string;
 }
-
-const STATUS_LABEL: Record<StatusKey, string> = {
-  pendente: 'Pendente',
-  pago: 'Pago',
-  vencido: 'Vencido'
-};
 
 function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -73,7 +69,6 @@ export class BilletsComponent implements OnInit {
   private scanner = viewChild.required(BarcodeScannerComponent);
   private categoryDialog = viewChild.required(CategoryDialogComponent);
 
-  readonly statusLabel = STATUS_LABEL;
   readonly pageSize = 10;
 
   readonly tabs: { key: StatusFilter; label: string }[] = [
@@ -137,6 +132,8 @@ export class BilletsComponent implements OnInit {
   readonly rows = computed<Row[]>(() => {
     const cat = new Map(this.categories().map((o) => [o.id, o.name]));
     const today = startOfDay(new Date());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
     return this.billets().map((b): Row => {
       const due = parseDate(b.dueDate);
@@ -147,6 +144,28 @@ export class BilletsComponent implements OnInit {
           : due && due < today
             ? 'vencido'
             : 'pendente';
+      const dueToday = due?.getTime() === today.getTime();
+      const dueTomorrow = due?.getTime() === tomorrow.getTime();
+      const statusLabel =
+        status === 'pago'
+          ? 'Pago'
+          : status === 'vencido'
+            ? 'Vencido'
+            : dueToday
+              ? 'Vence hoje'
+              : dueTomorrow
+                ? 'Vence amanhã'
+                : 'A vencer';
+      const statusClass =
+        status === 'pago'
+          ? 'badge-pago'
+          : status === 'vencido'
+            ? 'badge-vencido'
+            : dueToday
+              ? 'badge-vence-hoje'
+              : dueTomorrow
+                ? 'badge-vence-amanha'
+                : 'badge-a-vencer';
 
       return {
         billets: b,
@@ -155,7 +174,9 @@ export class BilletsComponent implements OnInit {
           ? 'N/A'
           : cat.get(b.categoryId) ?? 'N/A',
         due,
-        status
+        status,
+        statusLabel,
+        statusClass
       };
     });
   });
@@ -306,6 +327,13 @@ export class BilletsComponent implements OnInit {
     if (b.daysUntilDue === 0) return 'today';
     if (b.daysUntilDue === 1) return 'tomorrow';
     return '';
+  }
+
+  urgencyBadgeClass(b: BilletWeek): string {
+    if (b.daysUntilDue < 0) return 'badge-vencido';
+    if (b.daysUntilDue === 0) return 'badge-vence-hoje';
+    if (b.daysUntilDue === 1) return 'badge-vence-amanha';
+    return 'badge-a-vencer';
   }
 
   urgencyLabel(b: BilletWeek): string {

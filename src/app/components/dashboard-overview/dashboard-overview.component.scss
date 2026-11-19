@@ -195,9 +195,11 @@ tbody tr:hover { background: var(--table-row-hover); }
   font-size: 12px;
   font-weight: 600;
 }
-.badge-pago { background: var(--success-soft); color: var(--success); }
+.badge-pago,
+.badge-a-vencer { background: var(--success-soft); color: var(--success); }
 .badge-vencido { background: var(--danger-soft); color: var(--danger); }
-.badge-a-vencer { background: var(--warning-soft); color: var(--warning); }
+.badge-vence-hoje { background: var(--warning-soft); color: var(--warning); }
+.badge-vence-amanha { background: var(--primary-soft); color: var(--primary); }
 
 .empty { margin: 0; padding: 28px 20px; color: var(--muted-foreground); font-size: 13px; text-align: center; }
 

@@ -411,9 +411,11 @@ tbody tr:hover { background: var(--table-row-hover); }
   font-size: 12px;
   font-weight: 600;
 }
-.badge-pago { background: var(--success-soft); color: var(--success); }
+.badge-pago,
+.badge-a-vencer { background: var(--success-soft); color: var(--success); }
 .badge-vencido { background: var(--danger-soft); color: var(--danger); }
-.badge-pendente { background: var(--warning-soft); color: var(--warning); }
+.badge-vence-hoje { background: var(--warning-soft); color: var(--warning); }
+.badge-vence-amanha { background: var(--primary-soft); color: var(--primary); }
 
 .table-footer {
   display: flex;
