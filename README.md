@@ -12,6 +12,10 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+## Tema
+
+O tema escuro pode ser ativado pelo botão no canto superior direito. Na primeira visita, a aplicação acompanha a preferência de cores do sistema; depois, a escolha manual é salva neste navegador.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:

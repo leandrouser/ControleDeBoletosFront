@@ -1,7 +1,9 @@
 /* You can add global styles to this file, and also import other style files */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-:root {
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
   --background: #fafafa;
   --card: #ffffff;
   --foreground: #09090b;
@@ -16,12 +18,86 @@
   --warning: #b45309;
   --warning-soft: #fef3c7;
   --danger: #b91c1c;
+  --danger-foreground: #ffffff;
   --danger-soft: #fee2e2;
+  --danger-border: #fecaca;
+  --primary-hover: #1c40c2;
+  --input-placeholder: #a1a1aa;
+  --table-row-hover: #fafafa;
+  --skeleton-base: #f4f4f5;
+  --skeleton-highlight: #ececee;
+  --stat-open: #eef2ff;
+  --stat-open-accent: #818cf8;
+  --stat-danger: #fef2f2;
+  --stat-danger-accent: #f87171;
+  --stat-warning: #fffbeb;
+  --stat-warning-accent: #fbbf24;
+  --stat-success: #f0fdf4;
+  --stat-success-accent: #4ade80;
+  --preview-card: #ffffff;
+  --preview-foreground: #202a3e;
+  --preview-muted: #9299a8;
+  --preview-border: #edf0f4;
+  --preview-row-border: #f0f2f5;
+  --preview-purple: #f0edff;
+  --preview-purple-foreground: #7958cf;
+  --preview-success: #e8f7f0;
+  --preview-success-foreground: #32956c;
+  --preview-warning: #fff2e5;
+  --preview-warning-foreground: #d98635;
   --radius: 10px;
   --shadow: 0 1px 2px rgb(0 0 0 / 5%);
 }
 
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --background: #09090b;
+  --card: #111113;
+  --foreground: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --border: #27272a;
+  --primary: #8da3ff;
+  --primary-foreground: #101b35;
+  --primary-soft: #1d2746;
+  --success: #4ade80;
+  --success-soft: #14291d;
+  --warning: #fbbf24;
+  --warning-soft: #30250e;
+  --danger: #f87171;
+  --danger-foreground: #1c0808;
+  --danger-soft: #351a1a;
+  --danger-border: #5b2525;
+  --primary-hover: #a1b2ff;
+  --input-placeholder: #71717a;
+  --table-row-hover: #1b1b1f;
+  --skeleton-base: #202024;
+  --skeleton-highlight: #2b2b30;
+  --stat-open: #1d2746;
+  --stat-open-accent: #818cf8;
+  --stat-danger: #351a1a;
+  --stat-danger-accent: #f87171;
+  --stat-warning: #30250e;
+  --stat-warning-accent: #fbbf24;
+  --stat-success: #14291d;
+  --stat-success-accent: #4ade80;
+  --preview-card: #181b24;
+  --preview-foreground: #f4f4f5;
+  --preview-muted: #a1a1aa;
+  --preview-border: #30323b;
+  --preview-row-border: #30323b;
+  --preview-purple: #2b2442;
+  --preview-purple-foreground: #c4b5fd;
+  --preview-success: #163325;
+  --preview-success-foreground: #86efac;
+  --preview-warning: #3a2a19;
+  --preview-warning-foreground: #fdba74;
+  --shadow: 0 1px 2px rgb(0 0 0 / 25%);
+}
+
 * { box-sizing: border-box; }
+
+html { min-height: 100%; }
 
 body {
   margin: 0;
@@ -29,9 +105,16 @@ body {
   color: var(--foreground);
   font-family: Inter, 'Segoe UI', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 180ms ease, color 180ms ease;
 }
+
+.page-header { padding-right: 56px; }
 
 :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+
+@media (max-width: 860px) {
+  .page-header { padding-right: 0; }
 }

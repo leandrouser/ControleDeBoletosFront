@@ -1,15 +1,15 @@
 :host {
   display: block;
   min-height: 100vh;
-  color: #172033;
+  color: var(--foreground);
   font-family: Inter, "Segoe UI", sans-serif;
 }
 
 .login-page {
   display: grid;
-  grid-template-columns: minmax(460px, 1fr) minmax(480px, 0.92fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
   min-height: 100vh;
-  background: #fff;
+  background: var(--background);
 }
 
 .login-panel {
@@ -24,7 +24,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: #172033;
+  color: var(--foreground);
   font-size: 19px;
   font-weight: 750;
   letter-spacing: -0.8px;
@@ -37,8 +37,8 @@
   height: 36px;
   place-items: center;
   border-radius: 11px;
-  background: #244fe0;
-  color: #fff;
+  background: var(--primary);
+  color: var(--primary-foreground);
 
   svg {
     width: 23px;
@@ -47,7 +47,7 @@
 }
 
 .brand-accent {
-  color: #244fe0;
+  color: var(--primary);
 }
 
 .login-content {
@@ -62,7 +62,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #6b7280;
+  color: var(--muted-foreground);
   font-size: 10px;
   font-weight: 750;
   letter-spacing: 1.15px;
@@ -72,26 +72,26 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #244fe0;
-  box-shadow: 0 0 0 4px #edf1ff;
+  background: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-soft);
 }
 
 h1 {
   margin: 18px 0 12px;
-  color: #172033;
+  color: var(--foreground);
   font-size: clamp(36px, 4vw, 46px);
   font-weight: 720;
   letter-spacing: -2.3px;
   line-height: 1.13;
 
   span {
-    color: #244fe0;
+    color: var(--primary);
   }
 }
 
 .login-description {
   margin: 0 0 32px;
-  color: #71798a;
+  color: var(--muted-foreground);
   font-size: 14px;
   line-height: 1.65;
 }
@@ -102,7 +102,7 @@ h1 {
   label {
     display: block;
     margin-bottom: 8px;
-    color: #30394b;
+    color: var(--foreground);
     font-size: 13px;
     font-weight: 650;
   }
@@ -113,14 +113,14 @@ h1 {
   align-items: center;
   min-height: 49px;
   padding: 0 13px;
-  border: 1px solid #e1e5ed;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--card);
   transition: border-color 150ms ease, box-shadow 150ms ease;
 
   &:focus-within {
-    border-color: #5273eb;
-    box-shadow: 0 0 0 3px rgb(36 79 224 / 11%);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
   }
 
   input {
@@ -131,12 +131,12 @@ h1 {
     border: 0;
     outline: 0;
     background: transparent;
-    color: #172033;
+    color: var(--foreground);
     font: inherit;
     font-size: 13px;
 
     &::placeholder {
-      color: #a0a7b4;
+      color: var(--input-placeholder);
     }
   }
 }
@@ -145,7 +145,7 @@ h1 {
   flex: 0 0 auto;
   width: 18px;
   height: 18px;
-  color: #8992a2;
+  color: var(--muted-foreground);
 }
 
 .password-toggle {
@@ -153,14 +153,14 @@ h1 {
   padding: 7px 0 7px 8px;
   border: 0;
   background: transparent;
-  color: #6c7484;
+  color: var(--muted-foreground);
   cursor: pointer;
   font: inherit;
   font-size: 11px;
   font-weight: 650;
 
   &:hover {
-    color: #244fe0;
+    color: var(--primary);
   }
 }
 
@@ -170,10 +170,10 @@ h1 {
   gap: 8px;
   margin: 0 0 17px;
   padding: 11px 12px;
-  border: 1px solid #f1caca;
+  border: 1px solid var(--danger-border);
   border-radius: 7px;
-  background: #fff5f5;
-  color: #a33131;
+  background: var(--danger-soft);
+  color: var(--danger);
   font-size: 12px;
 
   svg {
@@ -194,9 +194,9 @@ h1 {
   padding: 0 18px;
   border: 0;
   border-radius: 8px;
-  background: #244fe0;
+  background: var(--primary);
   box-shadow: 0 5px 12px rgb(36 79 224 / 17%);
-  color: #fff;
+  color: var(--primary-foreground);
   cursor: pointer;
   font: inherit;
   font-size: 13px;
@@ -210,12 +210,12 @@ h1 {
 
   &:hover:not(:disabled) {
     transform: translateY(-1px);
-    background: #1c40c2;
+    background: var(--primary-hover);
   }
 
   &:focus-visible,
   .password-toggle:focus-visible {
-    outline: 3px solid rgb(36 79 224 / 30%);
+    outline: 3px solid color-mix(in srgb, var(--primary) 35%, transparent);
     outline-offset: 3px;
   }
 
@@ -239,7 +239,7 @@ h1 {
   justify-content: space-between;
   gap: 14px;
   width: 100%;
-  color: #9aa1ae;
+  color: var(--muted-foreground);
   font-size: 10px;
 }
 
@@ -251,7 +251,7 @@ h1 {
   svg {
     width: 16px;
     height: 16px;
-    color: #72809a;
+    color: var(--muted-foreground);
   }
 }
 
@@ -322,10 +322,9 @@ h1 {
   padding: 21px 22px 15px;
   border: 1px solid rgb(255 255 255 / 11%);
   border-radius: 13px;
-  background: #fff;
+  background: var(--preview-card);
   box-shadow: 0 22px 60px rgb(0 0 0 / 25%);
-  color: #202a3e;
-  transform: rotate(-1deg);
+  color: var(--preview-foreground);
 }
 
 .preview-header,
@@ -345,7 +344,7 @@ h1 {
 
 .preview-overline,
 .preview-muted {
-  color: #9299a8;
+  color: var(--preview-muted);
   font-size: 9px;
 }
 
@@ -355,7 +354,7 @@ h1 {
 }
 
 .preview-menu {
-  color: #9ca3af;
+  color: var(--preview-muted);
   letter-spacing: 2px;
 }
 
@@ -375,8 +374,8 @@ h1 {
   height: 34px;
   place-items: center;
   border-radius: 10px;
-  background: #eaf8f1;
-  color: #29956a;
+  background: var(--preview-success);
+  color: var(--preview-success-foreground);
 
   svg {
     width: 17px;
@@ -387,14 +386,14 @@ h1 {
 .preview-divider {
   height: 1px;
   margin: 17px 0 4px;
-  background: #edf0f4;
+  background: var(--preview-border);
 }
 
 .preview-invoice {
   justify-content: flex-start;
   gap: 10px;
   padding: 11px 0;
-  border-bottom: 1px solid #f0f2f5;
+  border-bottom: 1px solid var(--preview-row-border);
 
   &:last-of-type {
     border-bottom: 0;
@@ -413,18 +412,18 @@ h1 {
 }
 
 .invoice-icon-purple {
-  background: #f0edff;
-  color: #7958cf;
+  background: var(--preview-purple);
+  color: var(--preview-purple-foreground);
 }
 
 .invoice-icon-green {
-  background: #e8f7f0;
-  color: #32956c;
+  background: var(--preview-success);
+  color: var(--preview-success-foreground);
 }
 
 .invoice-icon-orange {
-  background: #fff2e5;
-  color: #d98635;
+  background: var(--preview-warning);
+  color: var(--preview-warning-foreground);
 }
 
 .invoice-description {
@@ -437,13 +436,13 @@ h1 {
   }
 
   small {
-    color: #9299a8;
+    color: var(--preview-muted);
     font-size: 9px;
   }
 }
 
 .invoice-amount {
-  color: #30394b;
+  color: var(--preview-foreground);
   font-size: 10px;
   font-weight: 650;
 }
@@ -453,7 +452,7 @@ h1 {
   align-items: center;
   gap: 7px;
   margin-top: 7px;
-  color: #728092;
+  color: var(--muted-foreground);
   font-size: 9px;
 
   span {
@@ -496,7 +495,7 @@ h1 {
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .login-page {
     grid-template-columns: 1fr;
   }
@@ -524,6 +523,8 @@ h1 {
   .login-content {
     padding: 40px 0;
   }
+
+  .input-wrap input { font-size: 16px; }
 
   h1 {
     font-size: 39px;
@@ -553,6 +554,7 @@ h1 {
   margin: -4px 0 16px;
 
   a {
+    color: var(--primary);
     font-size: 0.875rem;
     text-decoration: none;
     opacity: 0.85;

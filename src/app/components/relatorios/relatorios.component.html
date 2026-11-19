@@ -1,55 +1,150 @@
-<div class="relatorios-container">
-  <h2>Relatórios</h2>
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Relatórios</h1>
+      <p>Acompanhe seus boletos por categoria e situação.</p>
+    </div>
+  </header>
 
-  <div class="loading" *ngIf="loading">
-    Carregando relatório...
-  </div>
+  @if (loading()) {
+    <div class="card loading" role="status" aria-live="polite">
+      Carregando relatório...
+    </div>
+  }
 
-  <div *ngIf="!loading && relatorio" class="relatorio-content">
-    <div class="resumo">
-      <h3>Resumo</h3>
-      <p>Total de Billets: {{ relatorio.totalBillets }}</p>
-      <p>Valor Total: R$ {{ relatorio.valorTotal | number:'1.2-2' }}</p>
+  @if (error(); as errorMessage) {
+    <div class="card error" role="alert">
+      <p>{{ errorMessage }}</p>
+      <button type="button" class="retry-button" (click)="loadRelatorio()">
+        Tentar novamente
+      </button>
+    </div>
+  }
+
+  @if (!loading() && relatorio(); as data) {
+    <div class="stats">
+      <article class="card stat stat-open">
+        <span class="stat-label">Total de boletos</span>
+        <strong class="stat-value">{{ data.totalBillets | number:'1.0-0':'pt-BR' }}</strong>
+        <span class="stat-hint">Boletos cadastrados</span>
+      </article>
+
+      <article class="card stat stat-success">
+        <span class="stat-label">Valor total</span>
+        <strong class="stat-value">{{ data.valorTotal | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+        <span class="stat-hint">Valor dos boletos cadastrados</span>
+      </article>
+
+      <button
+        class="card stat stat-period"
+        type="button"
+        (click)="cyclePeriod()"
+        [attr.aria-label]="'Valor de boletos no ' + periodLabel() + '. Clique para alternar para ' + nextPeriodLabel()"
+      >
+        <span class="stat-label">Valor no {{ periodLabel() }}</span>
+        <strong class="stat-value">{{ periodTotal() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+        <span class="stat-hint">Próximo período: {{ nextPeriodLabel() }}</span>
+      </button>
+    </div>
+  }
+
+  <form class="card filters" (submit)="applyFilters($event)">
+    <header class="filters-header">
+      <h2>Filtrar por vencimento</h2>
+      <p>O intervalo selecionado se aplica aos indicadores e às tabelas.</p>
+    </header>
+
+    <div class="filter-controls">
+      <label class="filter-field">
+        <span>Data inicial</span>
+        <input type="date" [value]="dateFrom()" (input)="onDateFromChange($event)" />
+      </label>
+
+      <label class="filter-field">
+        <span>Data final</span>
+        <input type="date" [value]="dateTo()" (input)="onDateToChange($event)" />
+      </label>
+
+      <div class="filter-actions">
+        <button class="apply-button" type="submit" [disabled]="loading()">
+          Aplicar filtros
+        </button>
+        <button class="clear-button" type="button" [disabled]="loading()" (click)="clearFilters()">
+          Limpar
+        </button>
+      </div>
     </div>
 
-    <div class="boletos-por-categoria">
-      <h3>Boletos por Categoria</h3>
-      <table class="relatorio-table">
-        <thead>
-          <tr>
-            <th>Categoria</th>
-            <th>Quantidade</th>
-            <th>Valor</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let item of relatorio.billetsPorCategoria">
-            <td>{{ item.categoria }}</td>
-            <td>{{ item.quantidade }}</td>
-            <td>R$ {{ item.valor | number:'1.2-2' }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    @if (filterError(); as filterErrorMessage) {
+      <p class="filter-error" role="alert">{{ filterErrorMessage }}</p>
+    }
+  </form>
 
-    <div class="boletos-por-status">
-      <h3>Boletos por Status</h3>
-      <table class="relatorio-table">
-        <thead>
-          <tr>
-            <th>Status</th>
-            <th>Quantidade</th>
-            <th>Valor</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let item of relatorio.billetsPorStatus">
-            <td>{{ item.status }}</td>
-            <td>{{ item.quantidade }}</td>
-            <td>R$ {{ item.valor | number:'1.2-2' }}</td>
-          </tr>
-        </tbody>
-      </table>
+  @if (!loading() && relatorio(); as data) {
+    <div class="grid">
+      <article class="card report-card">
+        <header class="card-header">
+          <h2>Boletos por categoria</h2>
+          <p>Quantidade e valor agrupados por categoria</p>
+        </header>
+
+        @if (data.billetsPorCategoria.length) {
+          <div class="table-wrap">
+            <table class="relatorio-table">
+              <thead>
+                <tr>
+                  <th scope="col">Categoria</th>
+                  <th scope="col" class="num">Quantidade</th>
+                  <th scope="col" class="num">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of data.billetsPorCategoria; track item.categoria) {
+                  <tr>
+                    <td>{{ item.categoria }}</td>
+                    <td class="num">{{ item.quantidade }}</td>
+                    <td class="num">{{ item.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="empty">Nenhum boleto encontrado por categoria.</p>
+        }
+      </article>
+
+      <article class="card report-card">
+        <header class="card-header">
+          <h2>Boletos por situação</h2>
+          <p>Quantidade e valor agrupados por situação</p>
+        </header>
+
+        @if (data.billetsPorStatus.length) {
+          <div class="table-wrap">
+            <table class="relatorio-table">
+              <thead>
+                <tr>
+                  <th scope="col">Situação</th>
+                  <th scope="col" class="num">Quantidade</th>
+                  <th scope="col" class="num">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of data.billetsPorStatus; track item.status) {
+                  <tr>
+                    <td>{{ item.status }}</td>
+                    <td class="num">{{ item.quantidade }}</td>
+                    <td class="num">{{ item.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="empty">Nenhum boleto encontrado por situação.</p>
+        }
+      </article>
     </div>
-  </div>
-</div>
+  }
+</section>

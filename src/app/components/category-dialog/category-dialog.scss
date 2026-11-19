@@ -183,7 +183,7 @@
       border-color: var(--danger);
 
       &:focus {
-        box-shadow: 0 0 0 3px rgb(220 38 38 / 12%);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 18%, transparent);
       }
     }
   }
@@ -213,7 +213,7 @@
 
   padding: 11px 12px;
 
-  border: 1px solid #fecaca;
+  border: 1px solid var(--danger-border);
   border-radius: 7px;
 
   background: var(--danger-soft);
