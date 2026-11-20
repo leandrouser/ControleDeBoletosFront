@@ -108,6 +108,8 @@ export class BilletsComponent implements OnInit {
   readonly lookingUp = signal(false);
   readonly editingName = signal(false);
   readonly copied = signal(false);
+  readonly copiedBarcodeId = signal<number | null>(null);
+  readonly copyError = signal<string | null>(null);
 
   readonly mainPage = signal<Page<Billets> | null>(null);
 
@@ -493,6 +495,23 @@ export class BilletsComponent implements OnInit {
       setTimeout(() => this.copied.set(false), 2000);
     } catch {
       this.formError.set('Não foi possível copiar. Selecione o código e copie manualmente.');
+    }
+  }
+
+  async copyBarcode(row: Row): Promise<void> {
+    const barcode = row.billets.barcode;
+    if (!barcode) return;
+
+    try {
+      await navigator.clipboard.writeText(barcode);
+      this.copyError.set(null);
+      this.copiedBarcodeId.set(row.billets.id ?? null);
+      setTimeout(() => {
+        if (this.copiedBarcodeId() === row.billets.id) this.copiedBarcodeId.set(null);
+      }, 2000);
+    } catch (err) {
+      console.error('Erro ao copiar código de barras:', err);
+      this.copyError.set('Não foi possível copiar o código de barras. Tente novamente.');
     }
   }
 

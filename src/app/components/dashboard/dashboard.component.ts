@@ -25,7 +25,6 @@ export class DashboardComponent {
   readonly initial = computed(() => (this.user()?.name?.charAt(0) || 'U').toUpperCase());
   private pinned = false;
 
-  // recolhimento automático da sidebar (desktop)
   readonly collapsed = signal(false);
   private readonly collapseDelayMs = 4000;
   private collapseTimer?: ReturnType<typeof setTimeout>;
@@ -38,18 +37,27 @@ export class DashboardComponent {
     chevronRight: 'M9 18l6-6-6-6'
   };
 
-  readonly nav: NavItem[] = [
-    { label: 'Visão geral', link: '/dashboard', exact: true,
-      icon: 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z' },
-    { label: 'Boletos', link: '/dashboard/billets',
-      icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h8' },
-    { label: 'Beneficiários', link: '/dashboard/beneficiarios',
-      icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75' },
-    { label: 'Categories', link: '/dashboard/categories',
-      icon: 'M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01' },
-    { label: 'Relatórios', link: '/dashboard/relatorios',
-      icon: 'M3 3v18h18M7 16V9M12 16V5M17 16v-4' }
-  ];
+    private readonly baseNav: NavItem[] = [
+      { label: 'Visão geral', link: '/dashboard', exact: true,
+        icon: 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z' },
+      { label: 'Boletos', link: '/dashboard/billets',
+        icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h8' },
+      { label: 'Beneficiários', link: '/dashboard/beneficiarios',
+        icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75' },
+      { label: 'Categories', link: '/dashboard/categories',
+        icon: 'M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01' },
+      { label: 'Relatórios', link: '/dashboard/relatorios',
+        icon: 'M3 3v18h18M7 16V9M12 16V5M17 16v-4' }
+    ];
+
+    private readonly adminNav: NavItem[] = [
+      { label: 'Usuários', link: '/dashboard/usuarios',
+        icon: 'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM20 8v6M23 11h-6' }
+    ];
+
+    readonly nav = computed<NavItem[]>(() =>
+      this.user()?.role === 'ADMIN' ? [...this.baseNav, ...this.adminNav] : this.baseNav
+    );
 
   constructor() {
     this.scheduleCollapse();

@@ -84,6 +84,7 @@
   svg { width: 16px; height: 16px; }
   &:hover { background: var(--muted); color: var(--foreground); }
   &.danger:hover { background: var(--danger-soft); color: var(--danger); }
+  &.success { color: var(--success); }
   &.success:hover { background: var(--success-soft); color: var(--success); }
 }
 
@@ -109,6 +110,7 @@
     cursor: pointer;
   }
 }
+.copy-alert { margin: 0 20px 12px; }
 
 /* ---------- filtros ---------- */
 .toolbar {

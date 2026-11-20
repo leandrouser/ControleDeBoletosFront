@@ -29,7 +29,7 @@
 
     <nav class="nav">
       <span class="nav-title">Menu</span>
-      @for (item of nav; track item.link) {
+      @for (item of nav(); track item.link) {
         <a class="nav-link" [routerLink]="item.link" routerLinkActive="active"
            [routerLinkActiveOptions]="{ exact: !!item.exact }" (click)="closeMenu()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"

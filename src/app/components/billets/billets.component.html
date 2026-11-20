@@ -105,6 +105,10 @@
       </select>
     </div>
 
+    @if (copyError()) {
+      <div class="alert copy-alert" role="alert"><span>{{ copyError() }}</span></div>
+    }
+
     <div class="tabs" role="tablist" aria-label="Filtrar por status">
       @for (t of tabs; track t.key) {
         <button type="button" role="tab" class="tab"
@@ -152,6 +156,18 @@
                 <td class="num">{{ r.billets.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
                 <td><span [class]="'badge ' + r.statusClass">{{ r.statusLabel }}</span></td>
                 <td class="actions">
+                  @if (r.billets.barcode) {
+                    <button type="button" class="icon-btn" [class.success]="copiedBarcodeId() === r.billets.id"
+                            (click)="copyBarcode(r)"
+                            [attr.aria-label]="copiedBarcodeId() === r.billets.id ? 'Código de barras copiado' : 'Copiar código de barras'"
+                            [title]="copiedBarcodeId() === r.billets.id ? 'Copiado!' : 'Copiar código de barras'">
+                      @if (copiedBarcodeId() === r.billets.id) {
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
+                      } @else {
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" /></svg>
+                      }
+                    </button>
+                  }
                   @if (r.status !== 'pago') {
                     <button type="button" class="icon-btn success" (click)="markPaid(r)" aria-label="Marcar boleto como pago" title="Marcar como pago">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="m8 12.5 3 3 5-6" /></svg>

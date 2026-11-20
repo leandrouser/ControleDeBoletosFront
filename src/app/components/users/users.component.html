@@ -1,0 +1,343 @@
+<section class="users">
+  <header class="users__header">
+    <div>
+      <h1>Usuários</h1>
+      <p>Gerencie quem pode acessar o sistema.</p>
+    </div>
+    <button type="button" class="ui-btn ui-btn--default" (click)="openCreate()">
+      <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 12h14" /><path d="M12 5v14" />
+      </svg>
+      Novo usuário
+    </button>
+  </header>
+
+  @if (error()) {
+    <div class="ui-alert" role="alert">
+      <span>{{ error() }}</span>
+      <button type="button" class="ui-link" (click)="load()">Tentar novamente</button>
+    </div>
+  }
+
+  @if (notice()) {
+    <div class="ui-alert ui-alert--success" role="status">{{ notice() }}</div>
+  }
+
+  <div class="ui-card">
+    <div class="users__toolbar">
+      <div class="ui-search">
+        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+        </svg>
+        <input
+          type="search"
+          class="ui-input"
+          placeholder="Buscar por nome, e-mail ou telefone"
+          aria-label="Buscar usuários"
+          [ngModel]="searchTerm"
+          (ngModelChange)="onSearchChange($event)"
+        />
+      </div>
+
+      <div class="ui-segmented" role="group" aria-label="Filtrar por status">
+        @for (option of statusOptions; track option.key) {
+          <button
+            type="button"
+            [class.is-active]="statusFilter === option.key"
+            [attr.aria-pressed]="statusFilter === option.key"
+            (click)="onStatusChange(option.key)"
+          >
+            {{ option.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="users__table-wrap" [class.is-loading]="loading() && users().length > 0">
+      <table class="users__table">
+        <thead>
+          <tr>
+            <th>Usuário</th>
+            <th class="hide-sm">Telefone</th>
+            <th>Perfil</th>
+            <th>Status</th>
+            <th class="users__col-actions"><span class="sr-only">Ações</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading() && users().length === 0) {
+            @for (row of skeletonRows; track row) {
+              <tr aria-hidden="true">
+                <td>
+                  <div class="users__identity">
+                    <span class="ui-skeleton ui-skeleton--circle"></span>
+                    <span class="users__identity-text">
+                      <span class="ui-skeleton" style="width: 140px"></span>
+                      <span class="ui-skeleton" style="width: 190px"></span>
+                    </span>
+                  </div>
+                </td>
+                <td class="hide-sm"><span class="ui-skeleton" style="width: 110px"></span></td>
+                <td><span class="ui-skeleton" style="width: 80px"></span></td>
+                <td><span class="ui-skeleton" style="width: 64px"></span></td>
+                <td></td>
+              </tr>
+            }
+          } @else {
+            @for (user of users(); track user.id) {
+              <tr [class.is-inactive]="!user.active">
+                <td>
+                  <div class="users__identity">
+                    <span class="ui-avatar" aria-hidden="true">{{ initials(user.name) }}</span>
+                    <span class="users__identity-text">
+                      <strong>
+                        {{ user.name }}
+                        @if (isSelf(user)) { <em class="users__you">você</em> }
+                      </strong>
+                      <small>{{ user.email || 'Sem e-mail' }}</small>
+                    </span>
+                  </div>
+                </td>
+                <td class="hide-sm">{{ user.phone || '—' }}</td>
+                <td>
+                  <span class="ui-badge" [class.ui-badge--default]="user.role === 'ADMIN'"
+                        [class.ui-badge--secondary]="user.role !== 'ADMIN'">
+                    {{ user.role === 'ADMIN' ? 'Administrador' : 'Usuário' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="ui-badge ui-badge--outline">
+                    <span class="ui-dot" [class.ui-dot--on]="user.active"></span>
+                    {{ user.active ? 'Ativo' : 'Inativo' }}
+                  </span>
+                </td>
+                <td class="users__col-actions">
+                  <div class="users__actions">
+                    <button type="button" class="ui-btn ui-btn--ghost ui-btn--sm" (click)="openEdit(user)">
+                      <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" />
+                      </svg>
+                      Editar
+                    </button>
+                    <button type="button" class="ui-btn ui-btn--ghost ui-btn--sm" title="Redefinir senha"
+                            (click)="openPasswordReset(user)">
+                      <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4" />
+                      </svg>
+                      Senha
+                    </button>
+                    <button
+                      type="button"
+                      class="ui-btn ui-btn--ghost ui-btn--sm"
+                      [class.ui-btn--danger-text]="user.active"
+                      [disabled]="isSelf(user)"
+                      [title]="isSelf(user) ? 'Você não pode desativar o seu próprio usuário' : ''"
+                      (click)="requestToggle(user)"
+                    >
+                      @if (user.active) {
+                        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+                          <path d="m17 8 5 5" /><path d="m22 8-5 5" />
+                        </svg>
+                        Desativar
+                      } @else {
+                        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+                          <path d="m16 11 2 2 4-4" />
+                        </svg>
+                        Ativar
+                      }
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="users__empty">Nenhum usuário encontrado.</td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="users__pagination">
+      <span>{{ totalElements() }} usuário(s)</span>
+      <div class="users__pager">
+        <span>Página {{ totalPages() === 0 ? 0 : page() + 1 }} de {{ totalPages() }}</span>
+        <button type="button" class="ui-btn ui-btn--outline ui-btn--sm" [disabled]="page() === 0"
+                (click)="goToPage(page() - 1)" aria-label="Página anterior">
+          <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+          Anterior
+        </button>
+        <button type="button" class="ui-btn ui-btn--outline ui-btn--sm" [disabled]="page() + 1 >= totalPages()"
+                (click)="goToPage(page() + 1)" aria-label="Próxima página">
+          Próxima
+          <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+        </button>
+      </div>
+    </footer>
+  </div>
+</section>
+
+<!-- Create / edit dialog -->
+@if (formOpen()) {
+  <div class="ui-overlay" (mousedown)="$event.target === $event.currentTarget ? closeForm() : null">
+    <div class="ui-dialog" role="dialog" aria-modal="true" aria-labelledby="user-form-title">
+      <header class="ui-dialog__header">
+        <h2 id="user-form-title">{{ editing() ? 'Editar usuário' : 'Novo usuário' }}</h2>
+        <p>
+          {{ editing()
+            ? 'Atualize os dados de acesso deste usuário.'
+            : 'Preencha os dados para liberar um novo acesso ao sistema.' }}
+        </p>
+      </header>
+
+      <form #f="ngForm" (ngSubmit)="save(f)" novalidate>
+        <div class="ui-field">
+          <label for="user-name">Nome</label>
+          <input id="user-name" class="ui-input" name="name" [(ngModel)]="form.name" #name="ngModel"
+                 required maxlength="120" [class.is-invalid]="f.submitted && name.invalid" />
+          @if (f.submitted && name.invalid) {
+            <small class="ui-field__error">Informe o nome (até 120 caracteres).</small>
+          }
+        </div>
+
+        <div class="ui-field">
+          <label for="user-email">E-mail</label>
+          <input id="user-email" class="ui-input" type="email" name="email" [(ngModel)]="form.email"
+                 #email="ngModel" required email maxlength="160" [class.is-invalid]="f.submitted && email.invalid" />
+          @if (f.submitted && email.invalid) {
+            <small class="ui-field__error">Informe um e-mail válido.</small>
+          }
+        </div>
+
+        <div class="ui-field">
+          <label for="user-phone">Telefone <span class="ui-field__optional">(opcional)</span></label>
+          <input id="user-phone" class="ui-input" name="phone" [(ngModel)]="form.phone" #phone="ngModel"
+                 maxlength="20" placeholder="(81) 99999-9999" [class.is-invalid]="f.submitted && phone.invalid" />
+          @if (f.submitted && phone.invalid) {
+            <small class="ui-field__error">Telefone deve ter no máximo 20 caracteres.</small>
+          }
+        </div>
+
+        @if (!editing()) {
+          <div class="ui-field">
+            <label for="user-password">Senha</label>
+            <input id="user-password" class="ui-input" type="password" name="password" [(ngModel)]="form.password"
+                   #password="ngModel" required minlength="8" maxlength="72" autocomplete="new-password"
+                   [class.is-invalid]="f.submitted && password.invalid" />
+            @if (f.submitted && password.invalid) {
+              <small class="ui-field__error">A senha deve ter entre 8 e 72 caracteres.</small>
+            } @else {
+              <small class="ui-field__hint">Mínimo de 8 caracteres.</small>
+            }
+          </div>
+        }
+
+        <div class="ui-field">
+          <label for="user-role">Perfil</label>
+          <select id="user-role" class="ui-input ui-select" name="role" [(ngModel)]="form.role"
+                  [disabled]="!!editing() && isSelf(editing()!)">
+            <option value="USER">Usuário</option>
+            <option value="ADMIN">Administrador</option>
+          </select>
+          @if (editing() && isSelf(editing()!)) {
+            <small class="ui-field__hint">Você não pode alterar o seu próprio perfil.</small>
+          }
+        </div>
+
+        @if (formError()) {
+          <div class="ui-alert" role="alert">{{ formError() }}</div>
+        }
+
+        <footer class="ui-dialog__footer">
+          <button type="button" class="ui-btn ui-btn--outline" (click)="closeForm()" [disabled]="saving()">
+            Cancelar
+          </button>
+          <button type="submit" class="ui-btn ui-btn--default" [disabled]="saving()">
+            {{ saving() ? 'Salvando...' : 'Salvar' }}
+          </button>
+        </footer>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Activate / deactivate confirmation -->
+@if (toggleTarget(); as target) {
+  <div class="ui-overlay" (mousedown)="$event.target === $event.currentTarget ? cancelToggle() : null">
+    <div class="ui-dialog ui-dialog--sm" role="alertdialog" aria-modal="true" aria-labelledby="toggle-title">
+      <header class="ui-dialog__header">
+        <h2 id="toggle-title">{{ target.active ? 'Desativar usuário?' : 'Ativar usuário?' }}</h2>
+        <p>
+          @if (target.active) {
+            <strong>{{ target.name }}</strong> não conseguirá mais entrar no sistema. Você pode reativar depois.
+          } @else {
+            <strong>{{ target.name }}</strong> voltará a ter acesso ao sistema.
+          }
+        </p>
+      </header>
+
+      @if (toggleError()) {
+        <div class="ui-alert" role="alert">{{ toggleError() }}</div>
+      }
+
+      <footer class="ui-dialog__footer">
+        <button type="button" class="ui-btn ui-btn--outline" (click)="cancelToggle()" [disabled]="toggling()">
+          Cancelar
+        </button>
+        <button type="button" class="ui-btn" [class.ui-btn--destructive]="target.active"
+                [class.ui-btn--default]="!target.active" (click)="confirmToggle()" [disabled]="toggling()">
+          {{ toggling() ? 'Aguarde...' : (target.active ? 'Desativar' : 'Ativar') }}
+        </button>
+      </footer>
+    </div>
+  </div>
+}
+
+<!-- Password reset dialog -->
+@if (passwordTarget(); as target) {
+  <div class="ui-overlay" (mousedown)="$event.target === $event.currentTarget ? closePasswordReset() : null">
+    <div class="ui-dialog ui-dialog--sm" role="dialog" aria-modal="true" aria-labelledby="password-title">
+      <header class="ui-dialog__header">
+        <h2 id="password-title">Redefinir senha</h2>
+        <p>Defina uma nova senha para <strong>{{ target.name }}</strong>. Informe-a ao usuário por um canal seguro.</p>
+      </header>
+
+      <form #pf="ngForm" (ngSubmit)="submitPasswordReset(pf)" novalidate>
+        <div class="ui-field">
+          <label for="new-password">Nova senha</label>
+          <input id="new-password" class="ui-input" type="password" name="newPassword"
+                 [(ngModel)]="newPassword" #np="ngModel" required minlength="8" maxlength="72"
+                 autocomplete="new-password" [class.is-invalid]="pf.submitted && np.invalid" />
+          @if (pf.submitted && np.invalid) {
+            <small class="ui-field__error">A senha deve ter entre 8 e 72 caracteres.</small>
+          } @else {
+            <small class="ui-field__hint">Mínimo de 8 caracteres.</small>
+          }
+        </div>
+
+        @if (passwordError()) {
+          <div class="ui-alert" role="alert">{{ passwordError() }}</div>
+        }
+
+        <footer class="ui-dialog__footer">
+          <button type="button" class="ui-btn ui-btn--outline" (click)="closePasswordReset()"
+                  [disabled]="resettingPassword()">Cancelar</button>
+          <button type="submit" class="ui-btn ui-btn--default" [disabled]="resettingPassword()">
+            {{ resettingPassword() ? 'Salvando...' : 'Redefinir' }}
+          </button>
+        </footer>
+      </form>
+    </div>
+  </div>
+}
