@@ -70,7 +70,7 @@
           @if (loading() && users().length === 0) {
             @for (row of skeletonRows; track row) {
               <tr aria-hidden="true">
-                <td>
+                <td data-label="Usuário">
                   <div class="users__identity">
                     <span class="ui-skeleton ui-skeleton--circle"></span>
                     <span class="users__identity-text">
@@ -79,16 +79,16 @@
                     </span>
                   </div>
                 </td>
-                <td class="hide-sm"><span class="ui-skeleton" style="width: 110px"></span></td>
-                <td><span class="ui-skeleton" style="width: 80px"></span></td>
-                <td><span class="ui-skeleton" style="width: 64px"></span></td>
-                <td></td>
+                <td class="hide-sm" data-label="Telefone"><span class="ui-skeleton" style="width: 110px"></span></td>
+                <td data-label="Perfil"><span class="ui-skeleton" style="width: 80px"></span></td>
+                <td data-label="Status"><span class="ui-skeleton" style="width: 64px"></span></td>
+                <td class="users__col-actions" data-label="Ações"></td>
               </tr>
             }
           } @else {
             @for (user of users(); track user.id) {
               <tr [class.is-inactive]="!user.active">
-                <td>
+                <td data-label="Usuário">
                   <div class="users__identity">
                     <span class="ui-avatar" aria-hidden="true">{{ initials(user.name) }}</span>
                     <span class="users__identity-text">
@@ -100,20 +100,20 @@
                     </span>
                   </div>
                 </td>
-                <td class="hide-sm">{{ user.phone || '—' }}</td>
-                <td>
+                <td class="hide-sm" data-label="Telefone">{{ user.phone || '—' }}</td>
+                <td data-label="Perfil">
                   <span class="ui-badge" [class.ui-badge--default]="user.role === 'ADMIN'"
                         [class.ui-badge--secondary]="user.role !== 'ADMIN'">
                     {{ user.role === 'ADMIN' ? 'Administrador' : 'Usuário' }}
                   </span>
                 </td>
-                <td>
+                <td data-label="Status">
                   <span class="ui-badge ui-badge--outline">
                     <span class="ui-dot" [class.ui-dot--on]="user.active"></span>
                     {{ user.active ? 'Ativo' : 'Inativo' }}
                   </span>
                 </td>
-                <td class="users__col-actions">
+                <td class="users__col-actions" data-label="Ações">
                   <div class="users__actions">
                     <button type="button" class="ui-btn ui-btn--ghost ui-btn--sm" (click)="openEdit(user)">
                       <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
