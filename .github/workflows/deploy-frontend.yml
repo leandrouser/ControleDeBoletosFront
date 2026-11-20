@@ -37,14 +37,14 @@ jobs:
         env:
           SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           SSH_HOST: ${{ secrets.VPS_HOST }}
-          SSH_USER: ${{ secrets.VPS_USER }}
         run: |
           : "${SSH_KEY:?secret VPS_SSH_KEY está vazio}"
           : "${SSH_HOST:?secret VPS_HOST está vazio}"
-          : "${SSH_USER:?secret VPS_USER está vazio}"
           install -m 700 -d ~/.ssh
-          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null \
+            || { echo "Chave privada inválida ou protegida por senha"; exit 1; }
           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: Enviar e publicar
@@ -54,13 +54,16 @@ jobs:
           BUILD_DIR: ${{ steps.out.outputs.dir }}
         run: |
           HOST="$SSH_USER@$SSH_HOST"
-          tar -czf - -C "$BUILD_DIR" . | ssh "$HOST" '
+          SSH_OPTS="-i $HOME/.ssh/deploy_key -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes"
+
+          tar -czf - -C "$BUILD_DIR" . | ssh $SSH_OPTS "$HOST" '
             set -e
             rm -rf /var/www/boletos-novo/.incoming
             mkdir -p /var/www/boletos-novo/.incoming
             tar -xzf - -C /var/www/boletos-novo/.incoming
           '
-          ssh "$HOST" '
+
+          ssh $SSH_OPTS "$HOST" '
             set -e
             cd /var/www/boletos-novo
             test -f .incoming/index.html
