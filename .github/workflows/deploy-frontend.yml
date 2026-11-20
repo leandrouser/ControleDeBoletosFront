@@ -47,9 +47,6 @@ jobs:
             || { echo "Chave privada inválida ou protegida por senha"; exit 1; }
           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
-      - name: Debug fingerprint
-        run: ssh-keygen -lf ~/.ssh/deploy_key
-
       - name: Enviar e publicar
         env:
           SSH_HOST: ${{ secrets.VPS_HOST }}
