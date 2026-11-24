@@ -345,6 +345,43 @@ export class BilletsComponent implements OnInit {
     return `Em ${b.daysUntilDue} dias`;
   }
 
+  weekActionRow(b: BilletWeek): Row {
+    const status: StatusKey =
+      b.status === 'PAID'
+        ? 'pago'
+        : b.daysUntilDue < 0
+          ? 'vencido'
+          : 'pendente';
+    const statusClass =
+      status === 'pago'
+        ? 'badge-pago'
+        : status === 'vencido'
+          ? 'badge-vencido'
+          : b.daysUntilDue === 0
+            ? 'badge-vence-hoje'
+            : b.daysUntilDue === 1
+              ? 'badge-vence-amanha'
+              : 'badge-a-vencer';
+
+    return {
+      billets: {
+        id: b.id,
+        barcode: b.barcode,
+        beneficiary: b.beneficiary,
+        dueDate: b.dueDate,
+        amount: b.amount,
+        categoryId: b.categoryId,
+        status: b.status
+      },
+      beneficiary: b.beneficiary?.trim() || 'N/A',
+      category: b.categoryName,
+      due: parseDate(b.dueDate),
+      status,
+      statusLabel: status === 'pago' ? 'Pago' : this.urgencyLabel(b),
+      statusClass
+    };
+  }
+
   onSearch(value: string): void {
     this.search.set(value);
     this.page.set(1);

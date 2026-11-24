@@ -116,10 +116,10 @@
 
 .apply-button,
 .clear-button {
-  min-height: 40px;
+  min-height: 44px;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 8px 14px;
+  border-radius: 8px;
+  padding: 0 14px;
   font: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -130,11 +130,11 @@
 }
 
 .apply-button {
-  border-color: var(--primary);
-  background: var(--primary);
-  color: var(--primary-foreground);
+  border-color: #18181b;
+  background: #18181b;
+  color: #fafafa;
 
-  &:hover:not(:disabled) { opacity: 0.9; }
+  &:hover:not(:disabled) { background: color-mix(in srgb, #18181b 88%, white); }
 }
 
 .clear-button {
@@ -147,6 +147,12 @@
 .filter-error {
   margin: 12px 0 0;
   color: var(--destructive);
+  font-size: 13px;
+}
+
+.filter-loading {
+  margin: 12px 0 0;
+  color: var(--muted-foreground);
   font-size: 13px;
 }
 

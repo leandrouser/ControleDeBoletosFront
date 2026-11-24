@@ -110,6 +110,13 @@ body {
 
 .page-header { padding-right: 56px; }
 
+.page-header .btn-primary.theme-action {
+  background: #18181b;
+  color: #fafafa;
+
+  &:hover:not(:disabled) { background: color-mix(in srgb, #18181b 88%, white); }
+}
+
 :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
@@ -117,4 +124,17 @@ body {
 
 @media (max-width: 860px) {
   .page-header { padding-right: 0; }
+}
+
+@media (min-width: 861px) {
+  body .page-header:has(.theme-action) { align-items: flex-start; }
+  body .page-header .theme-action { min-height: 44px; }
+
+  body:has(.app:not(.collapsed)) .theme-toggle {
+    right: calc(clamp(16px, 3vw, 40px) + max(0px, 50vw - 744px));
+  }
+
+  body:has(.app.collapsed) .theme-toggle {
+    right: calc(clamp(16px, 3vw, 40px) + max(0px, 50vw - 656px));
+  }
 }

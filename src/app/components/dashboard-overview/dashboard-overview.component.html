@@ -4,7 +4,7 @@
       <h1>Dashboard</h1>
       <p>Acompanhe vencimentos e valores em aberto dos seus boletos.</p>
     </div>
-    <a class="btn btn-primary" routerLink="/dashboard/billets">Ver Boletos</a>
+    <a class="btn btn-primary theme-action" routerLink="/dashboard/billets">Ver Boletos</a>
   </header>
 
   @if (error()) {
@@ -65,19 +65,30 @@
           </div>
         </header>
         <div class="chart-scroll">
-          <div class="chart" [style.--bucket-count]="data.vencimentos.length"
-               [attr.aria-label]="'Vencimentos por ' + chartPeriod()">
-            @for (bucket of data.vencimentos; track bucket.chave) {
-              <div class="bar-col">
-                <span class="bar-value">{{ bucket.valor | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</span>
-                <div class="bar-track">
-                  <div class="bar" [class.bar-empty]="bucket.valor === 0"
-                       [style.height.%]="bucket.percentual"></div>
+          @if (chartError()) {
+            <div class="alert" role="alert">
+              <span>{{ chartError() }}</span>
+              <button type="button" class="link" (click)="retryChart()">
+                Tentar novamente
+              </button>
+            </div>
+          } @else if (chartLoading()) {
+            <p class="empty" aria-live="polite">Atualizando gráfico...</p>
+          } @else {
+            <div class="chart" [style.--bucket-count]="chartBuckets().length"
+                 [attr.aria-label]="'Vencimentos por ' + chartPeriod()">
+              @for (bucket of chartBuckets(); track bucket.chave) {
+                <div class="bar-col">
+                  <span class="bar-value">{{ bucket.valor | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</span>
+                  <div class="bar-track">
+                    <div class="bar" [class.bar-empty]="bucket.valor === 0"
+                         [style.height.%]="bucket.percentual"></div>
+                  </div>
+                  <span class="bar-label">{{ bucket.rotulo }}<small>{{ bucket.rotuloPeriodo }}</small></span>
                 </div>
-                <span class="bar-label">{{ bucket.rotulo }}<small>{{ bucket.rotuloPeriodo }}</small></span>
-              </div>
-            }
-          </div>
+              }
+            </div>
+          }
         </div>
       </article>
 

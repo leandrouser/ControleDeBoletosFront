@@ -30,6 +30,7 @@ const PERIOD_LABELS: Record<ReportPeriod, string> = {
 })
 export class RelatoriosComponent implements OnInit {
   private readonly relatoriosService = inject(RelatoriosService);
+  private lastLoadedFilters: ReportDateFilter | null = null;
   readonly relatorio = signal<Relatorio | null>(null);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -70,16 +71,14 @@ export class RelatoriosComponent implements OnInit {
     }
 
     this.filterError.set(null);
-    this.activeFilters.set({ dueFrom, dueTo });
-    this.loadRelatorio();
+    this.loadFilters({ dueFrom, dueTo });
   }
 
   clearFilters(): void {
     this.dateFrom.set('');
     this.dateTo.set('');
     this.filterError.set(null);
-    this.activeFilters.set({});
-    this.loadRelatorio();
+    this.loadFilters({});
   }
 
   cyclePeriod(): void {
@@ -88,13 +87,14 @@ export class RelatoriosComponent implements OnInit {
   }
 
   loadRelatorio(): void {
+    const filters = this.activeFilters();
     this.loading.set(true);
     this.error.set(null);
-    this.relatorio.set(null);
 
-    this.relatoriosService.getRelatorio(this.activeFilters()).subscribe({
+    this.relatoriosService.getRelatorio(filters).subscribe({
       next: (data) => {
         this.relatorio.set(data);
+        this.lastLoadedFilters = filters;
         this.loading.set(false);
       },
       error: (error: unknown) => {
@@ -103,5 +103,18 @@ export class RelatoriosComponent implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  private loadFilters(filters: ReportDateFilter): void {
+    this.activeFilters.set(filters);
+    if (this.lastLoadedFilters && this.sameFilters(filters, this.lastLoadedFilters)) {
+      this.error.set(null);
+      return;
+    }
+    this.loadRelatorio();
+  }
+
+  private sameFilters(a: ReportDateFilter, b: ReportDateFilter): boolean {
+    return a.dueFrom === b.dueFrom && a.dueTo === b.dueTo;
   }
 }

@@ -7,7 +7,7 @@ type Decoder = () => Promise<string | null>;
   selector: 'app-barcode-scanner',
   standalone: true,
   template: `
-    <dialog #dialog (close)="stop()" aria-labelledby="scan-title">
+    <dialog #dialog (click)="onDialogClick($event)" (close)="stop()" aria-labelledby="scan-title">
       <header>
         <div>
           <h2 id="scan-title">Escanear boleto</h2>
@@ -88,12 +88,21 @@ export class BarcodeScannerComponent implements OnDestroy {
 
   private stream: MediaStream | null = null;
   private timer: ReturnType<typeof setTimeout> | null = null;
+  private timeoutTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly maxOpenTimeMs = 30 * 1000;
   private running = false;
   private decode: Decoder | null = null;
 
   async open(): Promise<void> {
-    this.dialog().nativeElement.showModal();
+    const dialog = this.dialog().nativeElement;
+    if (dialog.open) return;
+    dialog.showModal();
+    this.timeoutTimer = setTimeout(() => this.close(), this.maxOpenTimeMs);
     await this.start();
+  }
+
+  onDialogClick(event: MouseEvent): void {
+    if (event.target === this.dialog().nativeElement) this.close();
   }
 
   close(): void {
@@ -104,6 +113,10 @@ export class BarcodeScannerComponent implements OnDestroy {
 
   stop(): void {
     this.running = false;
+    if (this.timeoutTimer !== null) {
+      clearTimeout(this.timeoutTimer);
+      this.timeoutTimer = null;
+    }
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;

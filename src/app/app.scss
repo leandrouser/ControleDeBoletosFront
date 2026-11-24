@@ -25,3 +25,7 @@
 @media (max-width: 480px) {
   .theme-toggle { top: 12px; right: 12px; }
 }
+
+@media (min-width: 861px) {
+  .theme-toggle { top: 32px; }
+}

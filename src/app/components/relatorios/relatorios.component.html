@@ -6,7 +6,7 @@
     </div>
   </header>
 
-  @if (loading()) {
+  @if (loading() && !relatorio()) {
     <div class="card loading" role="status" aria-live="polite">
       Carregando relatório...
     </div>
@@ -21,7 +21,7 @@
     </div>
   }
 
-  @if (!loading() && relatorio(); as data) {
+  @if (relatorio(); as data) {
     <div class="stats">
       <article class="card stat stat-open">
         <span class="stat-label">Total de boletos</span>
@@ -75,12 +75,16 @@
       </div>
     </div>
 
+    @if (loading() && relatorio()) {
+      <p class="filter-loading" role="status" aria-live="polite">Atualizando relatório...</p>
+    }
+
     @if (filterError(); as filterErrorMessage) {
       <p class="filter-error" role="alert">{{ filterErrorMessage }}</p>
     }
   </form>
 
-  @if (!loading() && relatorio(); as data) {
+  @if (relatorio(); as data) {
     <div class="grid">
       <article class="card report-card">
         <header class="card-header">

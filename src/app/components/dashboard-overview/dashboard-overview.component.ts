@@ -38,8 +38,12 @@ export class DashboardOverviewComponent implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly overview = signal<DashboardOverviewResponse | null>(null);
+  readonly chartBuckets = signal<DashboardOverviewResponse['vencimentos']>([]);
+  readonly chartLoading = signal(false);
+  readonly chartError = signal<string | null>(null);
   readonly chartPeriod = signal<DashboardPeriod>('semana');
   readonly statusLabel = STATUS_LABEL;
+  private chartRequestId = 0;
 
   readonly chartPeriods: { key: DashboardPeriod; label: string }[] = [
     { key: 'dia', label: 'Dia' },
@@ -48,14 +52,17 @@ export class DashboardOverviewComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    console.log('overview init');
     this.load();
   }
 
   setChartPeriod(period: DashboardPeriod): void {
     if (this.chartPeriod() === period) return;
     this.chartPeriod.set(period);
-    this.load();
+    this.loadChart(period);
+  }
+
+  retryChart(): void {
+    this.loadChart(this.chartPeriod());
   }
 
   upcomingStatus(
@@ -73,19 +80,38 @@ export class DashboardOverviewComponent implements OnInit {
   }
 
   load(): void {
-    console.log('load chamado', new Date().toISOString());
+    this.chartRequestId++;
     this.loading.set(true);
     this.error.set(null);
     this.overviewService.getOverview(this.chartPeriod()).subscribe({
       next: (overview) => {
-        console.log('overview recebido', new Date().toISOString(), overview);
         this.overview.set(overview);
+        this.chartBuckets.set(overview.vencimentos);
         this.loading.set(false);
       },
       error: (err: unknown) => {
         console.error('Erro ao carregar visão geral:', err);
         this.error.set('Não foi possível carregar a visão geral. Tente novamente.');
         this.loading.set(false);
+      }
+    });
+  }
+
+  private loadChart(period: DashboardPeriod): void {
+    const requestId = ++this.chartRequestId;
+    this.chartLoading.set(true);
+    this.chartError.set(null);
+    this.overviewService.getOverview(period).subscribe({
+      next: (overview) => {
+        if (requestId !== this.chartRequestId) return;
+        this.chartBuckets.set(overview.vencimentos);
+        this.chartLoading.set(false);
+      },
+      error: (err: unknown) => {
+        if (requestId !== this.chartRequestId) return;
+        console.error('Erro ao carregar gráfico de vencimentos:', err);
+        this.chartError.set('Não foi possível atualizar o gráfico. Tente novamente.');
+        this.chartLoading.set(false);
       }
     });
   }
