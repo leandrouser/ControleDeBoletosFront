@@ -140,7 +140,12 @@
               @for (r of data.proximosVencimentos; track r.id) {
                 <tr>
                   <td>
-                    <div class="cell-title">{{ r.beneficiario || 'N/A' }}</div>
+                    <div class="cell-title">
+                      {{ r.beneficiario || 'N/A' }}
+                      @if (r.installmentNumber && r.installmentCount) {
+                        <span class="badge badge-a-vencer">{{ r.installmentNumber }}/{{ r.installmentCount }}</span>
+                      }
+                    </div>
                   </td>
                   <td>{{ r.categoriaNome }}</td>
                   <td>{{ r.dataVencimento | date:'dd/MM/yyyy' }}</td>

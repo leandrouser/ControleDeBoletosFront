@@ -1,6 +1,9 @@
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, DestroyRef, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { concatMap, from, map, merge, tap, toArray } from 'rxjs';
 import { Billets, BilletsService, BilletsSummary, BilletWeek, Page } from '../../services/billets.service';
 import { CategoryDialogComponent } from '../category-dialog/category-dialog';
 import { BarcodeScannerComponent } from '../barcode-scanner/barcode-scanner.component';
@@ -10,6 +13,12 @@ import { Category, CategoriesService } from '../../services/category.service';
 type StatusKey = 'pendente' | 'pago' | 'vencido';
 type StatusFilter = 'todos' | StatusKey;
 type FieldName = 'dueDate' | 'amount' | 'categoryId';
+type InstallmentSchedule = 'none' | '15-days' | '30-days' | 'monthly';
+type InstallmentForm = FormGroup<{
+  dueDate: FormControl<string>;
+  amount: FormControl<number | null>;
+  barcode: FormControl<string>;
+}>;
 
 interface Row {
   billets: Billets;
@@ -63,6 +72,7 @@ export class BilletsComponent implements OnInit {
   private categoriesService = inject(CategoriesService);
   readonly categories = signal<Category[]>([]);
   private fb = inject(FormBuilder);
+  private destroyRef = inject(DestroyRef);
 
   private formDialog = viewChild.required<ElementRef<HTMLDialogElement>>('formDialog');
   private deleteDialog = viewChild.required<ElementRef<HTMLDialogElement>>('deleteDialog');
@@ -94,6 +104,15 @@ export class BilletsComponent implements OnInit {
   readonly categoriesError = signal<string | null>(null);
   readonly saving = signal(false);
   readonly formError = signal<string | null>(null);
+  readonly installmentBatchFailed = signal(false);
+  readonly maxInstallments = 12;
+
+  readonly installmentSchedules: { key: InstallmentSchedule; label: string }[] = [
+    { key: 'none', label: 'Não parcelar' },
+    { key: '15-days', label: 'A cada 15 dias' },
+    { key: '30-days', label: 'A cada 30 dias' },
+    { key: 'monthly', label: 'No mesmo dia dos meses seguintes' }
+  ];
 
   readonly search = signal('');
   readonly statusFilter = signal<StatusFilter>('todos');
@@ -125,11 +144,14 @@ export class BilletsComponent implements OnInit {
     barcode: ['', barcodeValidator],
     dueDate: ['', Validators.required],
     amount: [null as number | null, [Validators.required, Validators.min(0.01)]],
+    installmentSchedule: ['none' as InstallmentSchedule],
+    installmentCount: [2],
     beneficiary: [''],
     categoryId: [null as number | null, Validators.required],
     status: ['pendente'],
     paymentDate: ['']
   });
+  readonly installmentDetails = new FormArray<InstallmentForm>([]);
 
   readonly rows = computed<Row[]>(() => {
     const cat = new Map(this.categories().map((o) => [o.id, o.name]));
@@ -219,6 +241,15 @@ export class BilletsComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    merge(
+      this.form.controls.installmentSchedule.valueChanges,
+      this.form.controls.installmentCount.valueChanges,
+      this.form.controls.dueDate.valueChanges,
+      this.form.controls.amount.valueChanges
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.syncInstallmentDetails());
+
     this.loadCategories();
     this.load();
     this.loadSummary();
@@ -368,6 +399,8 @@ export class BilletsComponent implements OnInit {
         id: b.id,
         barcode: b.barcode,
         beneficiary: b.beneficiary,
+        installmentNumber: b.installmentNumber,
+        installmentCount: b.installmentCount,
         dueDate: b.dueDate,
         amount: b.amount,
         categoryId: b.categoryId,
@@ -418,6 +451,7 @@ export class BilletsComponent implements OnInit {
     const b = row?.billets ?? null;
     this.editing.set(b);
     this.formError.set(null);
+    this.installmentBatchFailed.set(false);
     this.parsed.set(null);
     this.copied.set(false);
     this.lookingUp.set(false);
@@ -426,6 +460,8 @@ export class BilletsComponent implements OnInit {
       barcode: '',
       dueDate: b?.dueDate?.slice(0, 10) ?? toIso(new Date()),
       amount: b?.amount ?? null,
+      installmentSchedule: 'none',
+      installmentCount: 2,
       beneficiary: '',
       categoryId: b?.categoryId ?? null,
       status: b?.status === 'PAID' ? 'pago' : 'pendente',
@@ -454,6 +490,33 @@ export class BilletsComponent implements OnInit {
     }
 
     const v = this.form.getRawValue();
+    const current = this.editing();
+    const installmentSchedule = v.installmentSchedule ?? 'none';
+    const installmentCount = v.installmentCount ?? 1;
+
+    if (
+      !current &&
+      installmentSchedule !== 'none' &&
+      (!Number.isInteger(installmentCount) ||
+        installmentCount < 2 ||
+        installmentCount > this.maxInstallments)
+    ) {
+      this.form.controls.installmentCount.markAsTouched();
+      this.formError.set(`Informe entre 2 e ${this.maxInstallments} parcelas.`);
+      return;
+    }
+
+    if (
+      !current &&
+      installmentSchedule !== 'none' &&
+      (this.installmentDetails.length !== installmentCount - 1 ||
+        this.installmentDetails.invalid)
+    ) {
+      this.installmentDetails.markAllAsTouched();
+      this.formError.set('Preencha uma data e um valor válidos para cada parcela e confira os códigos de barras.');
+      return;
+    }
+
     const usingAuto = !!this.beneficiaryAuto() && !this.editingName();
     const name = (usingAuto ? this.beneficiaryAuto() : v.beneficiary)?.trim();
 
@@ -470,16 +533,63 @@ export class BilletsComponent implements OnInit {
       dueDate: v.dueDate!,
       amount: Number(v.amount),
       beneficiary: name,
+      installmentNumber: current?.installmentNumber,
+      installmentCount: current?.installmentCount,
       categoryId: v.categoryId!,
       status: paid ? 'PAID' : 'PENDING',
       paymentDate: paid ? v.paymentDate || toIso(new Date()) : undefined
     };
 
-    const current = this.editing();
+    let payloads = [payload];
+    if (!current && installmentSchedule !== 'none') {
+      payloads = [
+        {
+          ...payload,
+          installmentNumber: 1,
+          installmentCount
+        },
+        ...this.installmentDetails.getRawValue().map((detail, index) => {
+          const enteredBarcode = detail.barcode.trim();
+          const parsedBarcode = enteredBarcode ? parseBilletsCode(enteredBarcode) : null;
+          return {
+            ...payload,
+            installmentNumber: index + 2,
+            installmentCount,
+            barcode: parsedBarcode?.ok ? parsedBarcode.data.barcode : null,
+            dueDate: detail.dueDate,
+            amount: Number(detail.amount),
+            status: 'PENDING' as const,
+            paymentDate: undefined
+          };
+        })
+      ];
+
+      const existingBarcodes = new Set(
+        this.billets().map((billet) => billet.barcode).filter((code): code is string => !!code)
+      );
+      const batchBarcodes = new Set<string>();
+      for (const installment of payloads) {
+        const code = installment.barcode?.trim();
+        if (!code) continue;
+        if (existingBarcodes.has(code) || batchBarcodes.has(code)) {
+          this.formError.set('Cada parcela precisa ter um código de barras único e ainda não cadastrado.');
+          return;
+        }
+        batchBarcodes.add(code);
+      }
+    }
+
+    let createdCount = 0;
     const request$ =
       current?.id != null
-        ? this.billetsService.update(current.id, payload)
-        : this.billetsService.create(payload);
+        ? this.billetsService.update(current.id, payload).pipe(map(() => undefined))
+        : from(payloads).pipe(
+            concatMap((installment) =>
+              this.billetsService.create(installment).pipe(tap(() => createdCount++))
+            ),
+            toArray(),
+            map(() => undefined)
+          );
 
     this.saving.set(true);
     this.formError.set(null);
@@ -489,15 +599,109 @@ export class BilletsComponent implements OnInit {
         this.closeForm();
         this.reload();
       },
-      error: (err) => {
+      error: (err: unknown) => {
         console.error('Erro ao salvar boleto:', err);
         this.saving.set(false);
-        const known = err?.status === 400 || err?.status === 409;
+        if (!current && createdCount > 0) {
+          const message = `Foram criadas ${createdCount} de ${payloads.length} parcelas. As restantes não foram salvas; confira a lista antes de tentar novamente.`;
+          this.installmentBatchFailed.set(true);
+          this.formError.set(message);
+          this.reload();
+          this.error.set(message);
+          return;
+        }
+        const known =
+          err instanceof HttpErrorResponse &&
+          (err.status === 400 || err.status === 409);
         this.formError.set(
-          (known && err?.error?.message) ||
+          (known && typeof err.error?.message === 'string' && err.error.message) ||
             'Não foi possível salvar o boleto. Confira os dados e tente novamente.'
         );
       }
+    });
+  }
+
+  installmentCountInvalid(): boolean {
+    const count = this.form.controls.installmentCount.value;
+    return this.form.controls.installmentSchedule.value !== 'none' &&
+      (count == null || !Number.isInteger(count) || count < 2 || count > this.maxInstallments);
+  }
+
+  private syncInstallmentDetails(): void {
+    const schedule = this.form.controls.installmentSchedule.value ?? 'none';
+    if (this.editing() || schedule === 'none') {
+      this.installmentDetails.clear();
+      return;
+    }
+
+    const rawCount = this.form.controls.installmentCount.value;
+    const count = Math.min(
+      this.maxInstallments,
+      Math.max(2, typeof rawCount === 'number' && Number.isInteger(rawCount) ? rawCount : 2)
+    );
+    const futureCount = count - 1;
+
+    while (this.installmentDetails.length < futureCount) {
+      this.installmentDetails.push(this.createInstallmentDetail('', null));
+    }
+    while (this.installmentDetails.length > futureCount) {
+      this.installmentDetails.removeAt(this.installmentDetails.length - 1);
+    }
+
+    const dueDates = this.buildInstallmentDates(
+      this.form.controls.dueDate.value ?? '',
+      schedule,
+      count
+    );
+    const amount = this.form.controls.amount.value;
+    this.installmentDetails.controls.forEach((installment, index) => {
+      if (installment.controls.dueDate.pristine) {
+        installment.controls.dueDate.setValue(dueDates?.[index + 1] ?? '', { emitEvent: false });
+      }
+      if (installment.controls.amount.pristine) {
+        installment.controls.amount.setValue(amount, { emitEvent: false });
+      }
+    });
+  }
+
+  private createInstallmentDetail(dueDate: string, amount: number | null): InstallmentForm {
+    return new FormGroup({
+      dueDate: new FormControl(dueDate, {
+        nonNullable: true,
+        validators: [Validators.required]
+      }),
+      amount: new FormControl<number | null>(amount, {
+        validators: [Validators.required, Validators.min(0.01)]
+      }),
+      barcode: new FormControl('', {
+        nonNullable: true,
+        validators: [barcodeValidator]
+      })
+    });
+  }
+
+  private buildInstallmentDates(
+    firstDueDate: string,
+    schedule: InstallmentSchedule,
+    count: number
+  ): string[] | null {
+    const firstDate = parseDate(firstDueDate);
+    if (!firstDate) return null;
+
+    return Array.from({ length: count }, (_, index) => {
+      const dueDate = new Date(firstDate);
+      if (schedule === '15-days') {
+        dueDate.setDate(dueDate.getDate() + 15 * index);
+      } else if (schedule === '30-days') {
+        dueDate.setDate(dueDate.getDate() + 30 * index);
+      } else if (schedule === 'monthly') {
+        const month = new Date(firstDate.getFullYear(), firstDate.getMonth() + index, 1);
+        const lastDay = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+        month.setDate(Math.min(firstDate.getDate(), lastDay));
+        dueDate.setTime(month.getTime());
+      }
+
+      return toIso(dueDate);
     });
   }
 

@@ -231,6 +231,15 @@ select {
 }
 .dialog-sm { width: min(420px, calc(100vw - 32px)); }
 
+.installment-options {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: 10px;
+  background: var(--muted);
+}
+.installment-list { display: grid; gap: 12px; }
+
 @keyframes dialog-in {
   from { opacity: 0; transform: translateY(8px) scale(0.97); }
 }

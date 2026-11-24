@@ -34,6 +34,8 @@ export interface DashboardOverviewResponse {
     codigoBarras: string | null;
     linhaDigitavel: string | null;
     beneficiario: string | null;
+    installmentNumber?: number | null;
+    installmentCount?: number | null;
     categoriaNome: string;
     dataVencimento: string;
     valor: number;

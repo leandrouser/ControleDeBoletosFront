@@ -66,7 +66,12 @@
               @let r = weekActionRow(b);
               <tr [class]="'week-row ' + urgencyClass(b)">
                 <td class="strong">{{ b.dueDate | date:'dd/MM/yyyy' }}</td>
-                <td>{{ b.beneficiary }}</td>
+                <td>
+                  {{ b.beneficiary }}
+                  @if (b.installmentNumber && b.installmentCount) {
+                    <span class="badge badge-a-vencer">{{ b.installmentNumber }}/{{ b.installmentCount }}</span>
+                  }
+                </td>
                 <td>{{ b.categoryName }}</td>
                 <td class="num">{{ b.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
                 <td><span class="badge" [class]="'badge ' + urgencyBadgeClass(b)">{{ urgencyLabel(b) }}</span></td>
@@ -177,7 +182,12 @@
           <tbody>
             @for (r of paged(); track r.billets.id) {
               <tr>
-                <td class="strong">{{ r.beneficiary }}</td>
+                <td class="strong">
+                  {{ r.beneficiary }}
+                  @if (r.billets.installmentNumber && r.billets.installmentCount) {
+                    <span class="badge badge-a-vencer">{{ r.billets.installmentNumber }}/{{ r.billets.installmentCount }}</span>
+                  }
+                </td>
                 <td>{{ r.category }}</td>
                 <td>{{ r.due ? (r.due | date:'dd/MM/yyyy') : '—' }}</td>
                 <td class="num">{{ r.billets.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
@@ -346,6 +356,69 @@
         }
       </div>
 
+      @if (!editing()) {
+        <div class="field installment-options">
+          <label for="installmentSchedule">Parcelar este boleto?</label>
+          <select id="installmentSchedule" formControlName="installmentSchedule">
+            @for (schedule of installmentSchedules; track schedule.key) {
+              <option [value]="schedule.key">{{ schedule.label }}</option>
+            }
+          </select>
+          <small class="hint">Opcional. Escolha como gerar as parcelas após preencher o primeiro boleto.</small>
+
+          @if (form.controls.installmentSchedule.value !== 'none') {
+            <div class="installment-count">
+              <label for="installmentCount">Quantidade de parcelas (inclui esta)</label>
+              <input id="installmentCount" type="number" min="2" [max]="maxInstallments" step="1"
+                     formControlName="installmentCount" [class.invalid]="installmentCountInvalid()" />
+              @if (installmentCountInvalid()) {
+                <small class="err">Informe entre 2 e {{ maxInstallments }} parcelas.</small>
+              }
+              <small class="hint">As parcelas seguintes começam com os dados sugeridos e podem ser editadas. O código de barras é opcional.</small>
+              @if (form.controls.installmentSchedule.value === 'monthly') {
+                <small class="hint">Se o dia não existir no mês, será usado o último dia.</small>
+              }
+            </div>
+
+            <div class="installment-list">
+              @for (installment of installmentDetails.controls; let index = $index; track installment) {
+                <div class="field installment-options" [formGroup]="installment">
+                  <p><strong>Parcela {{ index + 2 }}</strong></p>
+                  <div class="field two">
+                    <div>
+                      <label [for]="'installmentDueDate-' + index">Vencimento</label>
+                      <input [id]="'installmentDueDate-' + index" type="date" formControlName="dueDate" />
+                      @if (installment.controls.dueDate.invalid && (installment.controls.dueDate.touched || installment.controls.dueDate.dirty)) {
+                        <small class="err">Informe a data.</small>
+                      }
+                    </div>
+                    <div>
+                      <label [for]="'installmentAmount-' + index">Valor</label>
+                      <div class="input-group">
+                        <span class="prefix">R$</span>
+                        <input [id]="'installmentAmount-' + index" type="number" step="0.01" min="0.01"
+                               inputmode="decimal" formControlName="amount" placeholder="0,00" />
+                      </div>
+                      @if (installment.controls.amount.invalid && (installment.controls.amount.touched || installment.controls.amount.dirty)) {
+                        <small class="err">Informe um valor maior que zero.</small>
+                      }
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label [for]="'installmentBarcode-' + index">Código de barras <span class="optional">(opcional)</span></label>
+                    <input [id]="'installmentBarcode-' + index" type="text" inputmode="numeric" autocomplete="off"
+                           formControlName="barcode" placeholder="Digite ou cole o código da parcela" />
+                    @if (installment.controls.barcode.invalid && (installment.controls.barcode.touched || installment.controls.barcode.dirty)) {
+                      <small class="err">{{ installment.controls.barcode.errors?.['barcode'] }}</small>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
       <div class="field two">
         <div>
           <label for="status">Situação</label>
@@ -365,8 +438,9 @@
 
     <footer class="dialog-footer">
       <button type="button" class="btn btn-outline" (click)="closeForm()">Cancelar</button>
-      <button type="submit" class="btn btn-primary" [disabled]="saving() || !!duplicate()">
-        {{ saving() ? 'Salvando...' : 'Salvar' }}
+      <button type="submit" class="btn btn-primary"
+              [disabled]="saving() || !!duplicate() || installmentBatchFailed()">
+        {{ saving() ? 'Salvando...' : installmentBatchFailed() ? 'Confira as parcelas' : 'Salvar' }}
       </button>
     </footer>
   </form>

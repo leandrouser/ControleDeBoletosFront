@@ -9,6 +9,8 @@ export interface Billets {
   id?: number;
   barcode?: string | null;
   beneficiary: string;
+  installmentNumber?: number | null;
+  installmentCount?: number | null;
   dueDate: string;
   amount: number;
   categoryId: number | null;
@@ -38,6 +40,8 @@ export interface BilletWeek {
   id: number;
   barcode: string | null;
   beneficiary: string;
+  installmentNumber?: number | null;
+  installmentCount?: number | null;
   dueDate: string;
   amount: number;
   status: 'PENDING' | 'PAID';
