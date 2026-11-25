@@ -725,17 +725,15 @@ export class BilletsComponent implements OnInit {
     this.applyCode(value);
   }
 
+  onInstallmentBarcodeInput(index: number, value: string): void {
+    this.applyInstallmentCode(index, value);
+  }
+
   onScanned(code: string): void {
     if (this.scannerTarget !== 'main') {
-      const control = this.installmentDetails.at(this.scannerTarget)?.controls.barcode;
+      const target = this.scannerTarget;
       this.scannerTarget = 'main';
-      if (!control) return;
-
-      control.setValue(code);
-      control.markAsDirty();
-      control.markAsTouched();
-      const result = parseBilletsCode(code);
-      if (result.ok) control.setValue(result.data.linha);
+      this.applyInstallmentCode(target, code, true);
       return;
     }
 
@@ -799,6 +797,30 @@ export class BilletsComponent implements OnInit {
     }
 
     this.parsed.set(data);
+    return data;
+  }
+
+  private applyInstallmentCode(index: number, value: string, markFromScanner = false): ParsedBillets | null {
+    const installment = this.installmentDetails.at(index);
+    if (!installment) return null;
+
+    const result = parseBilletsCode(value);
+    if (!result.ok) return null;
+
+    const data = result.data;
+    installment.controls.barcode.setValue(markFromScanner ? data.linha : value);
+    installment.controls.barcode.markAsDirty();
+    installment.controls.barcode.markAsTouched();
+
+    if (data.vencimento) {
+      installment.controls.dueDate.setValue(data.vencimento);
+      installment.controls.dueDate.markAsDirty();
+    }
+    if (data.valor !== null) {
+      installment.controls.amount.setValue(data.valor);
+      installment.controls.amount.markAsDirty();
+    }
+
     return data;
   }
 
