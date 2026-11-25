@@ -406,8 +406,17 @@
                   </div>
                   <div class="field">
                     <label [for]="'installmentBarcode-' + index">Código de barras <span class="optional">(opcional)</span></label>
-                    <input [id]="'installmentBarcode-' + index" type="text" inputmode="numeric" autocomplete="off"
-                           formControlName="barcode" placeholder="Digite ou cole o código da parcela" />
+                    <div class="barcode-row">
+                      <input [id]="'installmentBarcode-' + index" type="text" inputmode="numeric" autocomplete="off"
+                             formControlName="barcode" placeholder="Digite, cole ou escaneie o código"
+                             [class.invalid]="installment.controls.barcode.invalid && (installment.controls.barcode.touched || installment.controls.barcode.dirty)" />
+                      <button type="button" class="btn btn-outline" (click)="openInstallmentScanner(index)"
+                              [attr.aria-label]="'Escanear código de barras da parcela ' + (index + 2)"
+                              [title]="'Escanear código de barras da parcela ' + (index + 2)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M11 8v8M15 8v8M18 8v8" /></svg>
+                        Escanear
+                      </button>
+                    </div>
                     @if (installment.controls.barcode.invalid && (installment.controls.barcode.touched || installment.controls.barcode.dirty)) {
                       <small class="err">{{ installment.controls.barcode.errors?.['barcode'] }}</small>
                     }

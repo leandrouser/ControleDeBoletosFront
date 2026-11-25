@@ -78,6 +78,7 @@ export class BilletsComponent implements OnInit {
   private deleteDialog = viewChild.required<ElementRef<HTMLDialogElement>>('deleteDialog');
   private scanner = viewChild.required(BarcodeScannerComponent);
   private categoryDialog = viewChild.required(CategoryDialogComponent);
+  private scannerTarget: 'main' | number = 'main';
 
   readonly pageSize = 10;
 
@@ -711,6 +712,12 @@ export class BilletsComponent implements OnInit {
   }
 
   openScanner(): void {
+    this.scannerTarget = 'main';
+    void this.scanner().open();
+  }
+
+  openInstallmentScanner(index: number): void {
+    this.scannerTarget = index;
     void this.scanner().open();
   }
 
@@ -719,6 +726,19 @@ export class BilletsComponent implements OnInit {
   }
 
   onScanned(code: string): void {
+    if (this.scannerTarget !== 'main') {
+      const control = this.installmentDetails.at(this.scannerTarget)?.controls.barcode;
+      this.scannerTarget = 'main';
+      if (!control) return;
+
+      control.setValue(code);
+      control.markAsDirty();
+      control.markAsTouched();
+      const result = parseBilletsCode(code);
+      if (result.ok) control.setValue(result.data.linha);
+      return;
+    }
+
     const control = this.form.controls.barcode;
     control.setValue(code);
     control.markAsDirty();
