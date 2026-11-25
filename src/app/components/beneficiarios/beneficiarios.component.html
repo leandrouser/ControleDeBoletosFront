@@ -23,9 +23,9 @@
         <input type="search" placeholder="Buscar beneficiário pelo nome"
                [value]="search()" (input)="onSearch($any($event.target).value)" aria-label="Buscar beneficiários" />
       </label>
-      <span class="result-count">{{ beneficiarios().length }} {{ beneficiarios().length === 1 ? 'resultado' : 'resultados' }}</span>
+      <span class="result-count">{{ totalElements() }} {{ totalElements() === 1 ? 'beneficiário' : 'beneficiários' }}</span>
     </div>
-    <p class="hint">A busca mostra até 10 nomes. Digite para localizar outros beneficiários.</p>
+    <p class="hint">Mostrando até {{ pageSize }} beneficiários por página. Use a busca para localizar pelo nome.</p>
 
     @if (loading()) {
       <div class="skeleton-list" aria-busy="true" aria-label="Carregando beneficiários">
@@ -35,11 +35,31 @@
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Nome do beneficiário</th></tr>
+            <tr>
+              <th>Nome do beneficiário</th>
+              <th class="actions">Ações</th>
+            </tr>
           </thead>
           <tbody>
             @for (beneficiario of beneficiarios(); track beneficiario) {
-              <tr><td class="strong">{{ beneficiario }}</td></tr>
+              <tr>
+                <td class="strong">{{ beneficiario }}</td>
+                <td class="actions">
+                  <button type="button" class="icon-btn"
+                          (click)="openEdit(beneficiario)"
+                          [attr.aria-label]="'Editar ' + beneficiario" title="Editar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+                    </svg>
+                  </button>
+                  <button type="button" class="icon-btn danger" (click)="askDelete(beneficiario)"
+                          [attr.aria-label]="'Excluir ' + beneficiario" title="Excluir">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
             }
           </tbody>
         </table>
@@ -50,5 +70,65 @@
         <span>{{ search() ? 'Confira o nome e tente novamente.' : 'Os nomes aparecerão aqui quando forem identificados nos boletos.' }}</span>
       </div>
     }
+
+    @if (!loading() && totalPages() > 1) {
+      <footer class="table-footer">
+        <span>{{ rangeLabel() }}</span>
+        <div class="pager">
+          <button type="button" class="btn btn-outline" [disabled]="page() === 0" (click)="previousPage()">Anterior</button>
+          <span>Página {{ page() + 1 }} de {{ totalPages() }}</span>
+          <button type="button" class="btn btn-outline" [disabled]="page() + 1 >= totalPages()" (click)="nextPage()">Próxima</button>
+        </div>
+      </footer>
+    }
   </article>
 </section>
+
+<dialog #editDialog class="dialog" aria-labelledby="edit-title">
+  <form [formGroup]="form" (ngSubmit)="saveEdit()" novalidate>
+    <header class="dialog-header">
+      <h2 id="edit-title">Editar beneficiário</h2>
+      <p>O nome será atualizado em todos os boletos associados.</p>
+    </header>
+    <div class="fields">
+      @if (formError()) {
+        <div class="alert" role="alert">{{ formError() }}</div>
+      }
+      <div class="field">
+        <label for="beneficiaryName">Nome do beneficiário</label>
+        <input id="beneficiaryName" type="text" formControlName="name" maxlength="100"
+               [class.invalid]="form.controls.name.invalid && form.controls.name.touched" />
+        @if ((form.controls.name.hasError('required') || form.controls.name.hasError('pattern')) && form.controls.name.touched) {
+          <small class="err">Informe o nome do beneficiário.</small>
+        } @else if (form.controls.name.hasError('maxlength') && form.controls.name.touched) {
+          <small class="err">O nome deve ter no máximo 100 caracteres.</small>
+        }
+      </div>
+    </div>
+    <footer class="dialog-footer">
+      <button type="button" class="btn btn-outline" (click)="closeEdit()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        {{ saving() ? 'Salvando...' : 'Salvar' }}
+      </button>
+    </footer>
+  </form>
+</dialog>
+
+<dialog #deleteDialog class="dialog dialog-sm" aria-labelledby="delete-title">
+  <header class="dialog-header">
+    <h2 id="delete-title">Excluir beneficiário?</h2>
+    <p>
+      <strong>{{ toDelete() }}</strong> será removido da lista. Os boletos associados serão preservados
+      com o nome atual.
+    </p>
+  </header>
+  @if (deleteError()) {
+    <div class="dialog-error alert" role="alert">{{ deleteError() }}</div>
+  }
+  <footer class="dialog-footer">
+    <button type="button" class="btn btn-outline" (click)="cancelDelete()">Cancelar</button>
+    <button type="button" class="btn btn-danger" [disabled]="saving()" (click)="confirmDelete()">
+      {{ saving() ? 'Excluindo...' : 'Excluir beneficiário' }}
+    </button>
+  </footer>
+</dialog>
